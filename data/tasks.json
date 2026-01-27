@@ -1,0 +1,150 @@
+{
+  "taskLists": [
+    {
+      "id": "tl-1",
+      "name": "Q1 2026 Platform Improvements",
+      "description": "Core platform enhancements for Q1",
+      "sprint": "Sprint 23",
+      "startDate": "2026-01-13",
+      "endDate": "2026-01-26",
+      "tasks": [
+        {
+          "id": "t-1",
+          "title": "User Authentication Refactor",
+          "description": "Migrate from legacy auth to OAuth2",
+          "assignee": "Sarah Chen",
+          "storyPoints": 8,
+          "status": "completed",
+          "priority": "high",
+          "dueDate": "2026-01-20",
+          "tags": ["security", "backend"],
+          "createdAt": "2026-01-13T10:00:00Z",
+          "updatedAt": "2026-01-20T15:30:00Z"
+        },
+        {
+          "id": "t-2",
+          "title": "Dashboard Performance Optimization",
+          "description": "Reduce load time by 50% through caching and lazy loading",
+          "assignee": "Michael Torres",
+          "storyPoints": 5,
+          "status": "in-progress",
+          "priority": "high",
+          "dueDate": "2026-01-25",
+          "tags": ["frontend", "performance"],
+          "createdAt": "2026-01-13T10:00:00Z",
+          "updatedAt": "2026-01-24T09:15:00Z"
+        },
+        {
+          "id": "t-3",
+          "title": "API Rate Limiting Implementation",
+          "description": "Add rate limiting to prevent abuse",
+          "assignee": "Jessica Park",
+          "storyPoints": 3,
+          "status": "completed",
+          "priority": "medium",
+          "dueDate": "2026-01-22",
+          "tags": ["backend", "security"],
+          "createdAt": "2026-01-13T10:00:00Z",
+          "updatedAt": "2026-01-22T16:45:00Z"
+        },
+        {
+          "id": "t-4",
+          "title": "Mobile Responsive Design Updates",
+          "description": "Fix UI issues on mobile devices",
+          "assignee": "David Kim",
+          "storyPoints": 5,
+          "status": "not-started",
+          "priority": "medium",
+          "dueDate": "2026-01-28",
+          "tags": ["frontend", "mobile"],
+          "createdAt": "2026-01-13T10:00:00Z",
+          "updatedAt": "2026-01-13T10:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "tl-2",
+      "name": "Data Migration Project",
+      "description": "Migrate legacy database to new infrastructure",
+      "sprint": "Sprint 23-24",
+      "startDate": "2026-01-20",
+      "endDate": "2026-02-10",
+      "tasks": [
+        {
+          "id": "t-5",
+          "title": "Data Audit and Cleanup",
+          "description": "Identify and clean up inconsistent data",
+          "assignee": "Sarah Chen",
+          "storyPoints": 8,
+          "status": "in-progress",
+          "priority": "high",
+          "dueDate": "2026-01-30",
+          "tags": ["database", "data-quality"],
+          "createdAt": "2026-01-20T09:00:00Z",
+          "updatedAt": "2026-01-25T14:20:00Z"
+        },
+        {
+          "id": "t-6",
+          "title": "Migration Scripts Development",
+          "description": "Create automated migration scripts",
+          "assignee": "Michael Torres",
+          "storyPoints": 13,
+          "status": "not-started",
+          "priority": "high",
+          "dueDate": "2026-02-05",
+          "tags": ["database", "backend"],
+          "createdAt": "2026-01-20T09:00:00Z",
+          "updatedAt": "2026-01-20T09:00:00Z"
+        },
+        {
+          "id": "t-7",
+          "title": "Rollback Procedures Documentation",
+          "description": "Document procedures for safe rollback if needed",
+          "assignee": "Jessica Park",
+          "storyPoints": 2,
+          "status": "not-started",
+          "priority": "high",
+          "dueDate": "2026-02-03",
+          "tags": ["documentation", "database"],
+          "createdAt": "2026-01-20T09:00:00Z",
+          "updatedAt": "2026-01-20T09:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "tl-3",
+      "name": "Customer Feature Requests",
+      "description": "Top priority features requested by customers",
+      "tasks": [
+        {
+          "id": "t-8",
+          "title": "Export to Excel Functionality",
+          "description": "Allow users to export reports to Excel",
+          "assignee": "David Kim",
+          "storyPoints": 3,
+          "status": "completed",
+          "priority": "medium",
+          "dueDate": "2026-01-24",
+          "tags": ["frontend", "feature"],
+          "createdAt": "2026-01-15T11:00:00Z",
+          "updatedAt": "2026-01-24T10:30:00Z"
+        },
+        {
+          "id": "t-9",
+          "title": "Dark Mode Theme",
+          "description": "Implement dark mode across the application",
+          "assignee": "David Kim",
+          "storyPoints": 5,
+          "status": "in-progress",
+          "priority": "low",
+          "dueDate": "2026-02-01",
+          "tags": ["frontend", "ui"],
+          "createdAt": "2026-01-15T11:00:00Z",
+          "updatedAt": "2026-01-26T08:00:00Z"
+        }
+      ]
+    }
+  ],
+  "team": ["Sarah Chen", "Michael Torres", "Jessica Park", "David Kim"],
+  "lastUpdated": "2026-01-26T10:00:00Z"
+}
