@@ -1,15 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <main className="max-w-4xl mx-auto px-8 py-16 text-center relative">
-        <div className="absolute top-4 right-4">
-          <ThemeToggle />
-        </div>
+        <div className="absolute top-4 right-4"></div>
 
         <div className="mb-8">
           <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">

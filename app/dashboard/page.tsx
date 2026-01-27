@@ -126,7 +126,6 @@ export default async function DashboardPage() {
                         className="bg-gray-800 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${progress}%` }}
                       />
-                      white
                     </div>
                   </div>
                 </div>
