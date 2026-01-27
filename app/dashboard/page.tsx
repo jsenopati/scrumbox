@@ -89,7 +89,7 @@ export default async function DashboardPage() {
                 className="bg-gray-800 rounded-lg shadow overflow-hidden"
               >
                 {/* Task List Header */}
-                <div className="bg-linear-to-r from-blue-600 to-blue-700 p-6 text-white">
+                <div className="bg-linear-to-r from-cyan-800 to-slate-500 p-6 text-white">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h2 className="text-2xl font-bold">{taskList.name}</h2>
@@ -113,7 +113,7 @@ export default async function DashboardPage() {
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="mb-2">
+                  <div className="mb-2 rounded-lg bg-slate-800 p-3">
                     <div className="flex justify-between text-sm mb-1">
                       <span>Progress: {progress}%</span>
                       <span>
@@ -121,9 +121,9 @@ export default async function DashboardPage() {
                         {storyPoints.total}
                       </span>
                     </div>
-                    <div className="w-full bg-blue-400 rounded-full h-2">
+                    <div className="w-full bg-gray-500 rounded-full ring-2 ring-black h-3">
                       <div
-                        className="bg-gray-800 h-2 rounded-full transition-all duration-300"
+                        className="bg-teal-300 ring ring-inset ring-teal-600 h-3 rounded-full transition-all duration-300"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
@@ -136,7 +136,7 @@ export default async function DashboardPage() {
                     {taskList.tasks.map((task) => (
                       <div
                         key={task.id}
-                        className="flex items-center justify-between p-4 border border-gray-700 rounded-lg hover:bg-gray-700 transition-colors"
+                        className="flex items-center justify-between p-4 border border-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
                       >
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
