@@ -49,9 +49,11 @@ export default async function DashboardPage() {
                 {allStoryPoints.completed}/{allStoryPoints.total}
               </div>
               <div className="text-xs text-gray-400 mt-1">
-                {Math.round(
-                  (allStoryPoints.completed / allStoryPoints.total) * 100
-                )}
+                {allStoryPoints.total > 0
+                  ? Math.round(
+                      (allStoryPoints.completed / allStoryPoints.total) * 100
+                    )
+                  : 0}
                 % complete
               </div>
             </div>
