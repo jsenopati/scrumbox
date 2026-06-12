@@ -1,79 +1,85 @@
-"use client";
+"use client"
 
-import Link from "next/link";
+import { useState, type FormEvent } from "react"
+import { useRouter } from "next/navigation"
 
 export default function Home() {
+  const router = useRouter()
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError(null)
+    setSubmitting(true)
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        setError(data?.error ?? "Login failed")
+        setSubmitting(false)
+        return
+      }
+
+      const { role } = await res.json()
+      router.replace(role === "editor" ? "/manage" : "/dashboard")
+    } catch {
+      setError("Something went wrong. Please try again.")
+      setSubmitting(false)
+    }
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <main className="max-w-4xl mx-auto px-8 py-16 text-center relative">
-        <div className="absolute top-4 right-4"></div>
-
-        <div className="mb-8">
-          <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            📊 ScrumBox
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-2">
-            Lightweight Project Tracking for Executive Reporting
-          </p>
-          <p className="text-gray-500 dark:text-gray-400">
-            Track task lists, progress, story points, and team performance in
-            one digestible view
+    <div className="flex min-h-screen items-center justify-center bg-base-200 p-4">
+      <main className="w-full max-w-md">
+        <div className="mb-8 text-center">
+          <h1 className="text-5xl font-bold mb-3">📊 ScrumBox</h1>
+          <p className="text-base-content/60">
+            Enter your access password to continue
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 mt-12">
-          <Link
-            href="/dashboard"
-            className="group p-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all border-2 border-transparent hover:border-blue-500"
-          >
-            <div className="text-4xl mb-4">📈</div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-              Dashboard
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300">
-              View public read-only dashboard with all project metrics, progress
-              tracking, and team insights
-            </p>
-          </Link>
+        <div className="card bg-base-100 shadow-xl">
+          <form onSubmit={handleSubmit} className="card-body">
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Password</legend>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                autoFocus
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input w-full"
+                placeholder="••••••••"
+              />
+            </fieldset>
 
-          <Link
-            href="/admin"
-            className="group p-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all border-2 border-transparent hover:border-purple-500"
-          >
-            <div className="text-4xl mb-4">🔐</div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400">
-              Admin Panel
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300">
-              Password-protected access to manage tasks, update progress, and
-              edit project data
-            </p>
-          </Link>
-        </div>
+            {error && (
+              <div role="alert" className="alert alert-error alert-soft">
+                <span>{error}</span>
+              </div>
+            )}
 
-        <div className="mt-12 p-6 bg-blue-50 dark:bg-gray-800 rounded-lg">
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-            ✨ Features
-          </h3>
-          <div className="flex flex-wrap justify-center gap-3 text-sm text-gray-700 dark:text-gray-300">
-            <span className="px-3 py-1 bg-white dark:bg-gray-700 rounded-full">
-              Progress Tracking
-            </span>
-            <span className="px-3 py-1 bg-white dark:bg-gray-700 rounded-full">
-              Story Points
-            </span>
-            <span className="px-3 py-1 bg-white dark:bg-gray-700 rounded-full">
-              Team Analytics
-            </span>
-            <span className="px-3 py-1 bg-white dark:bg-gray-700 rounded-full">
-              Sprint Management
-            </span>
-            <span className="px-3 py-1 bg-white dark:bg-gray-700 rounded-full">
-              Secure Access
-            </span>
-          </div>
+            <button
+              type="submit"
+              disabled={submitting || password.length === 0}
+              className="btn btn-primary btn-block mt-2"
+            >
+              {submitting && <span className="loading loading-spinner" />}
+              {submitting ? "Checking…" : "Enter"}
+            </button>
+          </form>
         </div>
       </main>
     </div>
-  );
+  )
 }

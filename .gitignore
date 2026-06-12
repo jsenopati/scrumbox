@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local planning notes (not for the public repo)
+PLAN.md
+
+# AI agent skills (regenerable via `npx skills add`)
+.agents/
