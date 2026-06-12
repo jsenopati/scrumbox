@@ -37,56 +37,48 @@ export default function Home() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <main className="w-full max-w-md mx-auto px-8 py-16 text-center">
-        <div className="mb-8">
-          <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            📊 ScrumBox
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400">
+    <div className="flex min-h-screen items-center justify-center bg-base-200 p-4">
+      <main className="w-full max-w-md">
+        <div className="mb-8 text-center">
+          <h1 className="text-5xl font-bold mb-3">📊 ScrumBox</h1>
+          <p className="text-base-content/60">
             Enter your access password to continue
           </p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="p-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg text-left"
-        >
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-          >
-            Password
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            autoFocus
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="••••••••"
-          />
+        <div className="card bg-base-100 shadow-xl">
+          <form onSubmit={handleSubmit} className="card-body">
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Password</legend>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                autoFocus
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input w-full"
+                placeholder="••••••••"
+              />
+            </fieldset>
 
-          {error && (
-            <p
-              className="mt-3 text-sm text-red-600 dark:text-red-400"
-              role="alert"
+            {error && (
+              <div role="alert" className="alert alert-error alert-soft">
+                <span>{error}</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={submitting || password.length === 0}
+              className="btn btn-primary btn-block mt-2"
             >
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={submitting || password.length === 0}
-            className="mt-6 w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold transition-colors"
-          >
-            {submitting ? "Checking…" : "Enter"}
-          </button>
-        </form>
+              {submitting && <span className="loading loading-spinner" />}
+              {submitting ? "Checking…" : "Enter"}
+            </button>
+          </form>
+        </div>
       </main>
     </div>
   );

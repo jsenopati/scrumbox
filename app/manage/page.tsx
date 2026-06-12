@@ -13,61 +13,53 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const inputClass =
-  "w-full px-3 py-2 rounded-md border border-gray-600 bg-gray-900 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
-const labelClass = "block text-xs font-medium text-gray-400 mb-1";
-const primaryBtn =
-  "px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors";
-const dangerBtn =
-  "px-3 py-2 rounded-md bg-red-700 hover:bg-red-600 text-white text-sm font-medium transition-colors";
-
 function TaskListFields({ taskList }: { taskList?: TaskList }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-      <div className="md:col-span-2">
-        <label className={labelClass}>Name</label>
+      <fieldset className="fieldset md:col-span-2">
+        <legend className="fieldset-legend">Name</legend>
         <input
           name="name"
           required
           defaultValue={taskList?.name}
-          className={inputClass}
+          className="input w-full"
         />
-      </div>
-      <div className="md:col-span-2">
-        <label className={labelClass}>Description</label>
+      </fieldset>
+      <fieldset className="fieldset md:col-span-2">
+        <legend className="fieldset-legend">Description</legend>
         <input
           name="description"
           defaultValue={taskList?.description}
-          className={inputClass}
+          className="input w-full"
         />
-      </div>
-      <div>
-        <label className={labelClass}>Sprint</label>
+      </fieldset>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Sprint</legend>
         <input
           name="sprint"
           defaultValue={taskList?.sprint}
-          className={inputClass}
+          className="input w-full"
         />
-      </div>
+      </fieldset>
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelClass}>Start date</label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Start date</legend>
           <input
             name="startDate"
             type="date"
             defaultValue={taskList?.startDate}
-            className={inputClass}
+            className="input w-full"
           />
-        </div>
-        <div>
-          <label className={labelClass}>End date</label>
+        </fieldset>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">End date</legend>
           <input
             name="endDate"
             type="date"
             defaultValue={taskList?.endDate}
-            className={inputClass}
+            className="input w-full"
           />
-        </div>
+        </fieldset>
       </div>
     </div>
   );
@@ -76,82 +68,82 @@ function TaskListFields({ taskList }: { taskList?: TaskList }) {
 function TaskFields({ task }: { task?: Task }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-      <div className="md:col-span-2">
-        <label className={labelClass}>Title</label>
+      <fieldset className="fieldset md:col-span-2">
+        <legend className="fieldset-legend">Title</legend>
         <input
           name="title"
           required
           defaultValue={task?.title}
-          className={inputClass}
+          className="input w-full"
         />
-      </div>
-      <div className="md:col-span-2">
-        <label className={labelClass}>Description</label>
+      </fieldset>
+      <fieldset className="fieldset md:col-span-2">
+        <legend className="fieldset-legend">Description</legend>
         <input
           name="description"
           defaultValue={task?.description}
-          className={inputClass}
+          className="input w-full"
         />
-      </div>
-      <div>
-        <label className={labelClass}>Assignee</label>
+      </fieldset>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Assignee</legend>
         <input
           name="assignee"
           defaultValue={task?.assignee}
-          className={inputClass}
+          className="input w-full"
         />
-      </div>
-      <div>
-        <label className={labelClass}>Story points</label>
+      </fieldset>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Story points</legend>
         <input
           name="storyPoints"
           type="number"
           min="0"
           defaultValue={task?.storyPoints ?? 0}
-          className={inputClass}
+          className="input w-full"
         />
-      </div>
-      <div>
-        <label className={labelClass}>Status</label>
+      </fieldset>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Status</legend>
         <select
           name="status"
           defaultValue={task?.status ?? "not-started"}
-          className={inputClass}
+          className="select w-full"
         >
           <option value="not-started">Not started</option>
           <option value="in-progress">In progress</option>
           <option value="completed">Completed</option>
         </select>
-      </div>
-      <div>
-        <label className={labelClass}>Priority</label>
+      </fieldset>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Priority</legend>
         <select
           name="priority"
           defaultValue={task?.priority ?? "medium"}
-          className={inputClass}
+          className="select w-full"
         >
           <option value="low">Low</option>
           <option value="medium">Medium</option>
           <option value="high">High</option>
         </select>
-      </div>
-      <div>
-        <label className={labelClass}>Due date</label>
+      </fieldset>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Due date</legend>
         <input
           name="dueDate"
           type="date"
           defaultValue={task?.dueDate}
-          className={inputClass}
+          className="input w-full"
         />
-      </div>
-      <div>
-        <label className={labelClass}>Tags (comma separated)</label>
+      </fieldset>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Tags (comma separated)</legend>
         <input
           name="tags"
           defaultValue={task?.tags.join(", ")}
-          className={inputClass}
+          className="input w-full"
         />
-      </div>
+      </fieldset>
     </div>
   );
 }
@@ -161,15 +153,14 @@ export default async function ManagePage() {
   const data = await getProjectData();
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-base-200">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-white">Manage Tasks</h1>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/dashboard"
-              className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
-            >
+        <div className="navbar bg-base-100 rounded-box shadow-sm mb-6 px-4">
+          <div className="navbar-start">
+            <h1 className="text-xl font-bold">Manage Tasks</h1>
+          </div>
+          <div className="navbar-end gap-2">
+            <Link href="/dashboard" className="btn btn-ghost btn-sm">
               View Dashboard
             </Link>
             <LogoutButton />
@@ -177,135 +168,156 @@ export default async function ManagePage() {
         </div>
 
         {/* Add task list */}
-        <details className="mb-8 bg-gray-800 rounded-lg p-5">
-          <summary className="cursor-pointer font-semibold text-white">
-            + New task list
-          </summary>
-          <form action={createTaskListAction} className="mt-4 space-y-4">
-            <TaskListFields />
-            <button type="submit" className={primaryBtn}>
-              Create task list
-            </button>
-          </form>
-        </details>
+        <div className="collapse collapse-arrow bg-base-100 shadow-sm mb-6">
+          <input type="checkbox" />
+          <div className="collapse-title font-semibold">+ New task list</div>
+          <div className="collapse-content">
+            <form action={createTaskListAction} className="space-y-4">
+              <TaskListFields />
+              <button type="submit" className="btn btn-primary">
+                Create task list
+              </button>
+            </form>
+          </div>
+        </div>
 
         {data.taskLists.length === 0 && (
-          <p className="text-gray-400">
-            No task lists yet. Create one to get started.
-          </p>
+          <div className="card bg-base-100 shadow">
+            <div className="card-body items-center text-center text-base-content/60">
+              No task lists yet. Create one to get started.
+            </div>
+          </div>
         )}
 
         <div className="space-y-6">
           {data.taskLists.map((taskList) => (
-            <div key={taskList.id} className="bg-gray-800 rounded-lg p-5">
-              <div className="flex justify-between items-start gap-4">
-                <div>
-                  <h2 className="text-xl font-bold text-white">
-                    {taskList.name}
-                  </h2>
-                  <p className="text-gray-400 text-sm mt-1">
-                    {taskList.description}
-                  </p>
-                  {taskList.sprint && (
-                    <span className="inline-block mt-2 px-2 py-1 bg-gray-700 rounded text-xs text-gray-200">
-                      {taskList.sprint}
-                    </span>
-                  )}
+            <div key={taskList.id} className="card bg-base-100 shadow-md">
+              <div className="card-body">
+                <div className="flex flex-wrap justify-between items-start gap-3">
+                  <div>
+                    <h2 className="card-title">{taskList.name}</h2>
+                    <p className="text-base-content/60 text-sm mt-1">
+                      {taskList.description}
+                    </p>
+                    {taskList.sprint && (
+                      <span className="badge badge-neutral mt-2">
+                        {taskList.sprint}
+                      </span>
+                    )}
+                  </div>
+                  <form action={deleteTaskListAction}>
+                    <input type="hidden" name="id" value={taskList.id} />
+                    <button type="submit" className="btn btn-error btn-sm">
+                      Delete list
+                    </button>
+                  </form>
                 </div>
-                <form action={deleteTaskListAction}>
-                  <input type="hidden" name="id" value={taskList.id} />
-                  <button type="submit" className={dangerBtn}>
-                    Delete list
-                  </button>
-                </form>
-              </div>
 
-              {/* Edit task list */}
-              <details className="mt-4">
-                <summary className="cursor-pointer text-sm text-blue-400">
-                  Edit list details
-                </summary>
-                <form action={updateTaskListAction} className="mt-3 space-y-4">
-                  <input type="hidden" name="id" value={taskList.id} />
-                  <TaskListFields taskList={taskList} />
-                  <button type="submit" className={primaryBtn}>
-                    Save changes
-                  </button>
-                </form>
-              </details>
+                {/* Edit task list */}
+                <div className="collapse collapse-arrow bg-base-200 mt-2">
+                  <input type="checkbox" />
+                  <div className="collapse-title text-sm font-medium">
+                    Edit list details
+                  </div>
+                  <div className="collapse-content">
+                    <form action={updateTaskListAction} className="space-y-4">
+                      <input type="hidden" name="id" value={taskList.id} />
+                      <TaskListFields taskList={taskList} />
+                      <button type="submit" className="btn btn-primary btn-sm">
+                        Save changes
+                      </button>
+                    </form>
+                  </div>
+                </div>
 
-              {/* Tasks */}
-              <div className="mt-5 space-y-3">
-                {taskList.tasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="border border-gray-700 rounded-md p-4"
-                  >
-                    <div className="flex justify-between items-start gap-4">
-                      <div>
-                        <h3 className="font-semibold text-white">
-                          {task.title}
-                        </h3>
-                        <div className="text-xs text-gray-400 mt-1 flex flex-wrap gap-2">
-                          <span>{task.status.replace("-", " ")}</span>
-                          <span>•</span>
-                          <span>{task.priority}</span>
-                          <span>•</span>
-                          <span>{task.assignee || "Unassigned"}</span>
-                          <span>•</span>
-                          <span>{task.storyPoints} pts</span>
+                {/* Tasks */}
+                <div className="mt-2 space-y-3">
+                  {taskList.tasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className="rounded-box border border-base-300 p-4"
+                    >
+                      <div className="flex flex-wrap justify-between items-start gap-3">
+                        <div>
+                          <h3 className="font-semibold">{task.title}</h3>
+                          <div className="text-xs text-base-content/60 mt-1 flex flex-wrap gap-2">
+                            <span>{task.status.replace("-", " ")}</span>
+                            <span>•</span>
+                            <span>{task.priority}</span>
+                            <span>•</span>
+                            <span>{task.assignee || "Unassigned"}</span>
+                            <span>•</span>
+                            <span>{task.storyPoints} pts</span>
+                          </div>
+                        </div>
+                        <form action={deleteTaskAction}>
+                          <input
+                            type="hidden"
+                            name="taskListId"
+                            value={taskList.id}
+                          />
+                          <input type="hidden" name="taskId" value={task.id} />
+                          <button
+                            type="submit"
+                            className="btn btn-error btn-sm btn-soft"
+                          >
+                            Delete
+                          </button>
+                        </form>
+                      </div>
+
+                      <div className="collapse collapse-arrow bg-base-200 mt-3">
+                        <input type="checkbox" />
+                        <div className="collapse-title text-sm font-medium">
+                          Edit task
+                        </div>
+                        <div className="collapse-content">
+                          <form action={updateTaskAction} className="space-y-4">
+                            <input
+                              type="hidden"
+                              name="taskListId"
+                              value={taskList.id}
+                            />
+                            <input
+                              type="hidden"
+                              name="taskId"
+                              value={task.id}
+                            />
+                            <TaskFields task={task} />
+                            <button
+                              type="submit"
+                              className="btn btn-primary btn-sm"
+                            >
+                              Save task
+                            </button>
+                          </form>
                         </div>
                       </div>
-                      <form action={deleteTaskAction}>
-                        <input
-                          type="hidden"
-                          name="taskListId"
-                          value={taskList.id}
-                        />
-                        <input type="hidden" name="taskId" value={task.id} />
-                        <button type="submit" className={dangerBtn}>
-                          Delete
-                        </button>
-                      </form>
                     </div>
+                  ))}
+                </div>
 
-                    <details className="mt-3">
-                      <summary className="cursor-pointer text-sm text-blue-400">
-                        Edit task
-                      </summary>
-                      <form
-                        action={updateTaskAction}
-                        className="mt-3 space-y-4"
-                      >
-                        <input
-                          type="hidden"
-                          name="taskListId"
-                          value={taskList.id}
-                        />
-                        <input type="hidden" name="taskId" value={task.id} />
-                        <TaskFields task={task} />
-                        <button type="submit" className={primaryBtn}>
-                          Save task
-                        </button>
-                      </form>
-                    </details>
+                {/* Add task */}
+                <div className="collapse collapse-arrow bg-base-200 mt-2">
+                  <input type="checkbox" />
+                  <div className="collapse-title text-sm font-medium text-success">
+                    + Add task to this list
                   </div>
-                ))}
+                  <div className="collapse-content">
+                    <form action={createTaskAction} className="space-y-4">
+                      <input
+                        type="hidden"
+                        name="taskListId"
+                        value={taskList.id}
+                      />
+                      <TaskFields />
+                      <button type="submit" className="btn btn-primary btn-sm">
+                        Add task
+                      </button>
+                    </form>
+                  </div>
+                </div>
               </div>
-
-              {/* Add task */}
-              <details className="mt-4">
-                <summary className="cursor-pointer text-sm text-green-400">
-                  + Add task to this list
-                </summary>
-                <form action={createTaskAction} className="mt-3 space-y-4">
-                  <input type="hidden" name="taskListId" value={taskList.id} />
-                  <TaskFields />
-                  <button type="submit" className={primaryBtn}>
-                    Add task
-                  </button>
-                </form>
-              </details>
             </div>
           ))}
         </div>
