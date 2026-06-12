@@ -1,17 +1,17 @@
-import { getProjectData, type Task, type TaskList } from "@/lib/data";
-import { requireRole } from "@/lib/session";
-import { LogoutButton } from "@/components/logout-button";
-import Link from "next/link";
+import { getProjectData, type Task, type TaskList } from "@/lib/data"
+import { requireRole } from "@/lib/session"
+import { LogoutButton } from "@/components/logout-button"
+import Link from "next/link"
 import {
   createTaskListAction,
   updateTaskListAction,
   deleteTaskListAction,
   createTaskAction,
   updateTaskAction,
-  deleteTaskAction
-} from "./actions";
+  deleteTaskAction,
+} from "./actions"
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
 function TaskListFields({ taskList }: { taskList?: TaskList }) {
   return (
@@ -62,7 +62,7 @@ function TaskListFields({ taskList }: { taskList?: TaskList }) {
         </fieldset>
       </div>
     </div>
-  );
+  )
 }
 
 function TaskFields({ task }: { task?: Task }) {
@@ -145,12 +145,12 @@ function TaskFields({ task }: { task?: Task }) {
         />
       </fieldset>
     </div>
-  );
+  )
 }
 
 export default async function ManagePage() {
-  await requireRole("editor");
-  const data = await getProjectData();
+  await requireRole("editor")
+  const data = await getProjectData()
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -323,5 +323,5 @@ export default async function ManagePage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

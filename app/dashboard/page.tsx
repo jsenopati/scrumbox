@@ -1,52 +1,52 @@
 import {
   getProjectData,
   calculateProgress,
-  calculateStoryPoints
-} from "@/lib/data";
-import { DashboardHeader } from "@/components/dashboard-header";
-import { requireRole } from "@/lib/session";
+  calculateStoryPoints,
+} from "@/lib/data"
+import { DashboardHeader } from "@/components/dashboard-header"
+import { requireRole } from "@/lib/session"
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
 export default async function DashboardPage() {
-  const role = await requireRole("viewer");
-  const data = await getProjectData();
+  const role = await requireRole("viewer")
+  const data = await getProjectData()
 
   const totalTasks = data.taskLists.reduce(
     (sum, tl) => sum + tl.tasks.length,
-    0
-  );
+    0,
+  )
   const completedTasks = data.taskLists.reduce(
     (sum, tl) => sum + tl.tasks.filter((t) => t.status === "completed").length,
-    0
-  );
+    0,
+  )
   const overallProgress =
-    totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
   const allStoryPoints = calculateStoryPoints(
-    data.taskLists.flatMap((tl) => tl.tasks)
-  );
+    data.taskLists.flatMap((tl) => tl.tasks),
+  )
 
   const activeTasks = data.taskLists.reduce(
     (sum, tl) =>
       sum + tl.tasks.filter((t) => t.status === "in-progress").length,
-    0
-  );
+    0,
+  )
   const storyPointPct =
     allStoryPoints.total > 0
       ? Math.round((allStoryPoints.completed / allStoryPoints.total) * 100)
-      : 0;
+      : 0
 
   const statusBadge: Record<string, string> = {
     completed: "badge-success",
     "in-progress": "badge-warning",
-    "not-started": "badge-ghost"
-  };
+    "not-started": "badge-ghost",
+  }
   const priorityBadge: Record<string, string> = {
     high: "badge-error",
     medium: "badge-warning",
-    low: "badge-ghost"
-  };
+    low: "badge-ghost",
+  }
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -92,8 +92,8 @@ export default async function DashboardPage() {
         {/* Task Lists */}
         <div className="space-y-6">
           {data.taskLists.map((taskList) => {
-            const progress = calculateProgress(taskList.tasks);
-            const storyPoints = calculateStoryPoints(taskList.tasks);
+            const progress = calculateProgress(taskList.tasks)
+            const storyPoints = calculateStoryPoints(taskList.tasks)
 
             return (
               <div
@@ -188,7 +188,7 @@ export default async function DashboardPage() {
                   ))}
                 </div>
               </div>
-            );
+            )
           })}
         </div>
 
@@ -200,14 +200,14 @@ export default async function DashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {data.team.map((member) => {
                   const memberTasks = data.taskLists.flatMap((tl) =>
-                    tl.tasks.filter((t) => t.assignee === member)
-                  );
+                    tl.tasks.filter((t) => t.assignee === member),
+                  )
                   const memberCompleted = memberTasks.filter(
-                    (t) => t.status === "completed"
-                  ).length;
+                    (t) => t.status === "completed",
+                  ).length
                   const memberInProgress = memberTasks.filter(
-                    (t) => t.status === "in-progress"
-                  ).length;
+                    (t) => t.status === "in-progress",
+                  ).length
 
                   return (
                     <div
@@ -225,7 +225,7 @@ export default async function DashboardPage() {
                         </div>
                       </div>
                     </div>
-                  );
+                  )
                 })}
               </div>
             </div>
@@ -233,5 +233,5 @@ export default async function DashboardPage() {
         )}
       </div>
     </div>
-  );
+  )
 }

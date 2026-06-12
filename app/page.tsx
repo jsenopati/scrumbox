@@ -1,38 +1,38 @@
-"use client";
+"use client"
 
-import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react"
+import { useRouter } from "next/navigation"
 
 export default function Home() {
-  const router = useRouter();
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const router = useRouter()
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-    setSubmitting(true);
+    event.preventDefault()
+    setError(null)
+    setSubmitting(true)
 
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password })
-      });
+        body: JSON.stringify({ password }),
+      })
 
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        setError(data?.error ?? "Login failed");
-        setSubmitting(false);
-        return;
+        const data = await res.json().catch(() => null)
+        setError(data?.error ?? "Login failed")
+        setSubmitting(false)
+        return
       }
 
-      const { role } = await res.json();
-      router.replace(role === "editor" ? "/manage" : "/dashboard");
+      const { role } = await res.json()
+      router.replace(role === "editor" ? "/manage" : "/dashboard")
     } catch {
-      setError("Something went wrong. Please try again.");
-      setSubmitting(false);
+      setError("Something went wrong. Please try again.")
+      setSubmitting(false)
     }
   }
 
@@ -81,5 +81,5 @@ export default function Home() {
         </div>
       </main>
     </div>
-  );
+  )
 }

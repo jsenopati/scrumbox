@@ -1,20 +1,20 @@
-import "server-only";
-import { getIronSession, type SessionOptions } from "iron-session";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import "server-only"
+import { getIronSession, type SessionOptions } from "iron-session"
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
 
-export type Role = "viewer" | "editor";
+export type Role = "viewer" | "editor"
 
 export interface SessionData {
-  role?: Role;
+  role?: Role
 }
 
-const sessionSecret = process.env.SESSION_SECRET;
+const sessionSecret = process.env.SESSION_SECRET
 
 if (!sessionSecret || sessionSecret.length < 32) {
   throw new Error(
-    "SESSION_SECRET environment variable must be set and at least 32 characters long"
-  );
+    "SESSION_SECRET environment variable must be set and at least 32 characters long",
+  )
 }
 
 export const sessionOptions: SessionOptions = {
@@ -24,18 +24,18 @@ export const sessionOptions: SessionOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    path: "/"
-  }
-};
+    path: "/",
+  },
+}
 
 export async function getSession() {
-  const cookieStore = await cookies();
-  return getIronSession<SessionData>(cookieStore, sessionOptions);
+  const cookieStore = await cookies()
+  return getIronSession<SessionData>(cookieStore, sessionOptions)
 }
 
 export async function getRole(): Promise<Role | undefined> {
-  const session = await getSession();
-  return session.role;
+  const session = await getSession()
+  return session.role
 }
 
 /**
@@ -45,15 +45,15 @@ export async function getRole(): Promise<Role | undefined> {
  * Redirects to the appropriate page when the requirement is not met.
  */
 export async function requireRole(minimum: Role): Promise<Role> {
-  const role = await getRole();
+  const role = await getRole()
 
   if (!role) {
-    redirect("/");
+    redirect("/")
   }
 
   if (minimum === "editor" && role !== "editor") {
-    redirect("/dashboard");
+    redirect("/dashboard")
   }
 
-  return role;
+  return role
 }

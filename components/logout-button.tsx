@@ -1,19 +1,19 @@
-"use client";
+"use client"
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 export function LogoutButton() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
 
   async function handleLogout() {
-    setLoading(true);
+    setLoading(true)
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      router.replace("/");
+      await fetch("/api/auth/logout", { method: "POST" })
+      router.replace("/")
     } catch {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
@@ -27,5 +27,5 @@ export function LogoutButton() {
       {loading && <span className="loading loading-spinner loading-xs" />}
       {loading ? "Signing out…" : "Sign out"}
     </button>
-  );
+  )
 }

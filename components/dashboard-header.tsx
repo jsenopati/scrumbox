@@ -1,10 +1,10 @@
-import Link from "next/link";
-import { LogoutButton } from "@/components/logout-button";
-import type { Role } from "@/lib/session";
+import Link from "next/link"
+import { LogoutButton } from "@/components/logout-button"
+import type { Role } from "@/lib/session"
 
 interface DashboardHeaderProps {
-  lastUpdated: string;
-  role: Role;
+  lastUpdated: string
+  role: Role
 }
 
 export function DashboardHeader({ lastUpdated, role }: DashboardHeaderProps) {
@@ -27,5 +27,5 @@ export function DashboardHeader({ lastUpdated, role }: DashboardHeaderProps) {
         <LogoutButton />
       </div>
     </div>
-  );
+  )
 }
