@@ -96,6 +96,7 @@ function TaskFields({ task, team }: { task?: Task; team: string[] }) {
       <fieldset className="fieldset md:col-span-2">
         <legend className="fieldset-legend">Assignees</legend>
         <select
+          key={(task?.assignees ?? []).join(",")}
           name="assignee"
           multiple
           defaultValue={task?.assignees ?? []}
