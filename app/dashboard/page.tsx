@@ -1,9 +1,6 @@
-import {
-  getProjectData,
-  calculateProgress,
-  calculateStoryPoints,
-} from "@/lib/data"
+import { getProjectData, calculateStoryPoints } from "@/lib/data"
 import { DashboardHeader } from "@/components/dashboard-header"
+import { DashboardView } from "@/components/dashboard-view"
 import { requireRole } from "@/lib/session"
 
 export const dynamic = "force-dynamic"
@@ -29,7 +26,6 @@ export default async function DashboardPage() {
   const anyStoryPoints = data.taskLists.some((tl) =>
     tl.tasks.some((t) => t.storyPoints != null),
   )
-
   const activeTasks = data.taskLists.reduce(
     (sum, tl) =>
       sum + tl.tasks.filter((t) => t.status === "in-progress").length,
@@ -40,169 +36,20 @@ export default async function DashboardPage() {
       ? Math.round((allStoryPoints.completed / allStoryPoints.total) * 100)
       : 0
 
-  const statusBadge: Record<string, string> = {
-    completed: "badge-success",
-    "in-progress": "badge-warning",
-    "not-started": "badge-ghost",
-  }
-  const priorityBadge: Record<string, string> = {
-    asap: "badge-error badge-outline font-bold",
-    high: "badge-error",
-    medium: "badge-warning",
-    low: "badge-ghost",
-    backlog: "badge-neutral",
-  }
-
   return (
     <div className="min-h-screen bg-base-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <DashboardHeader lastUpdated={data.lastUpdated} role={role} />
-
-        {/* Overall Stats */}
-        <div className="stats stats-vertical sm:stats-horizontal w-full bg-base-100 shadow mb-6">
-          <div className="stat">
-            <div className="stat-title">Overall Progress</div>
-            <div className="stat-value text-primary">{overallProgress}%</div>
-            <div className="stat-desc">
-              {completedTasks} of {totalTasks} tasks
-            </div>
-          </div>
-          {anyStoryPoints && (
-            <div className="stat">
-              <div className="stat-title">Story Points</div>
-              <div className="stat-value text-success">
-                {allStoryPoints.completed}/{allStoryPoints.total}
-              </div>
-              <div className="stat-desc">{storyPointPct}% complete</div>
-            </div>
-          )}
-          <div className="stat">
-            <div className="stat-title">Active Tasks</div>
-            <div className="stat-value text-warning">{activeTasks}</div>
-            <div className="stat-desc">In progress</div>
-          </div>
-        </div>
-
-        {data.taskLists.length === 0 && (
-          <div className="card bg-base-100 shadow">
-            <div className="card-body items-center text-center text-base-content/60">
-              No task lists yet.
-            </div>
-          </div>
-        )}
-
-        {/* Task Lists */}
-        <div className="space-y-6">
-          {data.taskLists.map((taskList) => {
-            const progress = calculateProgress(taskList.tasks)
-            const storyPoints = calculateStoryPoints(taskList.tasks)
-            const listHasStoryPoints = taskList.tasks.some(
-              (t) => t.storyPoints != null,
-            )
-
-            return (
-              <div
-                key={taskList.id}
-                className="card bg-base-100 shadow-md overflow-hidden"
-              >
-                {/* Task List Header */}
-                <div className="bg-neutral text-neutral-content p-6">
-                  <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
-                    <div>
-                      <h2 className="text-2xl font-bold">{taskList.name}</h2>
-                      <p className="opacity-80 mt-1">{taskList.description}</p>
-                      {taskList.sprint && (
-                        <span className="badge badge-primary mt-2">
-                          {taskList.sprint}
-                        </span>
-                      )}
-                    </div>
-                    {taskList.startDate && taskList.endDate && (
-                      <div className="text-sm opacity-80">
-                        {new Date(taskList.startDate).toLocaleDateString()} –{" "}
-                        {new Date(taskList.endDate).toLocaleDateString()}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Progress */}
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Progress: {progress}%</span>
-                    {listHasStoryPoints && (
-                      <span>
-                        Story Points: {storyPoints.completed}/
-                        {storyPoints.total}
-                      </span>
-                    )}
-                  </div>
-                  <progress
-                    className="progress progress-primary w-full"
-                    value={progress}
-                    max={100}
-                  />
-                </div>
-
-                {/* Tasks */}
-                <div className="card-body gap-3">
-                  {taskList.tasks.length === 0 && (
-                    <p className="text-base-content/60 text-sm">
-                      No tasks in this list.
-                    </p>
-                  )}
-                  {taskList.tasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="flex flex-wrap items-start justify-between gap-3 p-4 rounded-box border border-base-300 hover:bg-base-200 transition-colors"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center flex-wrap gap-2 mb-2">
-                          <h3 className="font-semibold">{task.title}</h3>
-                          <span
-                            className={`badge badge-sm ${priorityBadge[task.priority]}`}
-                          >
-                            {task.priority}
-                          </span>
-                        </div>
-                        <p className="text-base-content/70 text-sm mb-2">
-                          {task.description}
-                        </p>
-                        <div className="flex flex-wrap gap-2 items-center text-sm text-base-content/60">
-                          <span className="font-medium">{task.assignee}</span>
-                          {task.storyPoints != null && (
-                            <>
-                              <span>•</span>
-                              <span>{task.storyPoints} pts</span>
-                            </>
-                          )}
-                          {task.dueDate && (
-                            <>
-                              <span>•</span>
-                              <span>
-                                Due:{" "}
-                                {new Date(task.dueDate).toLocaleDateString()}
-                              </span>
-                            </>
-                          )}
-                          {task.tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="badge badge-sm badge-outline"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      <span className={`badge ${statusBadge[task.status]}`}>
-                        {task.status.replace("-", " ")}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        <DashboardView
+          data={data}
+          anyStoryPoints={anyStoryPoints}
+          allStoryPoints={allStoryPoints}
+          storyPointPct={storyPointPct}
+          overallProgress={overallProgress}
+          completedTasks={completedTasks}
+          totalTasks={totalTasks}
+          activeTasks={activeTasks}
+        />
       </div>
     </div>
   )
