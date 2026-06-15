@@ -38,7 +38,14 @@ function parseStatus(formData: FormData): Task["status"] {
 
 function parsePriority(formData: FormData): Task["priority"] {
   const value = str(formData, "priority")
-  return value === "high" || value === "low" ? value : "medium"
+  if (
+    value === "asap" ||
+    value === "high" ||
+    value === "low" ||
+    value === "backlog"
+  )
+    return value
+  return "medium"
 }
 
 function parseStoryPoints(formData: FormData): number | null {

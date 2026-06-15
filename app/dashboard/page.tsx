@@ -46,9 +46,11 @@ export default async function DashboardPage() {
     "not-started": "badge-ghost",
   }
   const priorityBadge: Record<string, string> = {
+    asap: "badge-error badge-outline font-bold",
     high: "badge-error",
     medium: "badge-warning",
     low: "badge-ghost",
+    backlog: "badge-neutral",
   }
 
   return (

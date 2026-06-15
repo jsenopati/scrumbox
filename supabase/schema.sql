@@ -23,7 +23,7 @@ create table if not exists tasks (
   status        text not null default 'not-started'
                 check (status in ('not-started','in-progress','completed')),
   priority      text not null default 'medium'
-                check (priority in ('low','medium','high')),
+                check (priority in ('backlog','low','medium','high','asap')),
   due_date      date,
   tags          text[] not null default '{}',
   created_at    timestamptz not null default now(),

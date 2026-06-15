@@ -7,7 +7,7 @@ export interface Task {
   assignee: string
   storyPoints: number | null
   status: "not-started" | "in-progress" | "completed"
-  priority: "low" | "medium" | "high"
+  priority: "backlog" | "low" | "medium" | "high" | "asap"
   dueDate?: string
   tags: string[]
   createdAt: string

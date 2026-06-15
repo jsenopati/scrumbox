@@ -131,9 +131,11 @@ function TaskFields({ task }: { task?: Task }) {
           defaultValue={task?.priority ?? "medium"}
           className="select w-full"
         >
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
+          <option value="asap">DO IT ASAP!</option>
           <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+          <option value="backlog">Backlog</option>
         </select>
       </fieldset>
       <fieldset className="fieldset">
