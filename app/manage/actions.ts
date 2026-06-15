@@ -31,6 +31,10 @@ function parseTags(formData: FormData): string[] {
     .filter((t) => t.length > 0)
 }
 
+function parseAssignees(formData: FormData): string[] {
+  return (formData.getAll("assignee") as string[]).filter((v) => v.length > 0)
+}
+
 function parseStatus(formData: FormData): Task["status"] {
   const value = str(formData, "status")
   return value === "in-progress" || value === "completed"
@@ -120,7 +124,7 @@ export async function createTaskAction(formData: FormData) {
   await addTask(taskListId, {
     title,
     description: str(formData, "description"),
-    assignee: str(formData, "assignee"),
+    assignees: parseAssignees(formData),
     storyPoints: parseStoryPoints(formData),
     status: parseStatus(formData),
     priority: parsePriority(formData),
@@ -144,7 +148,7 @@ export async function updateTaskAction(formData: FormData) {
   await updateTask(taskListId, taskId, {
     title: str(formData, "title"),
     description: str(formData, "description"),
-    assignee: str(formData, "assignee"),
+    assignees: parseAssignees(formData),
     storyPoints: parseStoryPoints(formData),
     status: parseStatus(formData),
     priority: parsePriority(formData),

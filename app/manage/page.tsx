@@ -93,27 +93,37 @@ function TaskFields({ task, team }: { task?: Task; team: string[] }) {
           className="input w-full"
         />
       </fieldset>
-      <fieldset className="fieldset">
-        <legend className="fieldset-legend">Assignee</legend>
+      <fieldset className="fieldset md:col-span-2">
+        <legend className="fieldset-legend">Assignees</legend>
         <select
           name="assignee"
-          defaultValue={task?.assignee ?? ""}
+          multiple
+          defaultValue={task?.assignees ?? []}
           className="select w-full"
+          size={Math.max(
+            3,
+            Math.min(
+              team.length +
+                (task?.assignees.filter((a) => !team.includes(a)).length ?? 0),
+              6,
+            ),
+          )}
         >
-          <option value="">Unassigned</option>
           {team.map((name) => (
-            <option key={name} value={name}>
+            <option key={name} value={name} className="py-1 px-2">
               {name}
             </option>
           ))}
-          {task?.assignee &&
-            task.assignee.trim().length > 0 &&
-            !team.includes(task.assignee) && (
-              <option value={task.assignee}>{task.assignee}</option>
-            )}
+          {task?.assignees
+            .filter((a) => !team.includes(a))
+            .map((a) => (
+              <option key={a} value={a} className="py-1 px-2">
+                {a}
+              </option>
+            ))}
         </select>
       </fieldset>
-      <fieldset className="fieldset">
+      <fieldset className="fieldset md:col-span-2">
         <legend className="fieldset-legend">Story points</legend>
         <div className="flex items-center gap-3">
           <input
@@ -322,7 +332,11 @@ export default async function ManagePage() {
                             <span>•</span>
                             <span>{task.priority}</span>
                             <span>•</span>
-                            <span>{task.assignee || "Unassigned"}</span>
+                            <span>
+                              {task.assignees.length > 0
+                                ? task.assignees.join(", ")
+                                : "Unassigned"}
+                            </span>
                             {task.storyPoints != null && (
                               <>
                                 <span>•</span>

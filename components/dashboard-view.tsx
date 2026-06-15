@@ -165,9 +165,9 @@ function SimpleView({ data }: { data: ProjectData }) {
                         <p className="text-sm font-medium truncate">
                           {task.title}
                         </p>
-                        {task.assignee && (
+                        {task.assignees.length > 0 && (
                           <p className="text-xs text-base-content/50 truncate">
-                            {task.assignee}
+                            {task.assignees.join(", ")}
                           </p>
                         )}
                       </div>
@@ -278,7 +278,9 @@ function DetailedView({ data }: { data: ProjectData }) {
                       {task.description}
                     </p>
                     <div className="flex flex-wrap gap-2 items-center text-sm text-base-content/60">
-                      <span className="font-medium">{task.assignee}</span>
+                      <span className="font-medium">
+                        {task.assignees.join(", ")}
+                      </span>
                       {task.storyPoints != null && (
                         <>
                           <span>•</span>
@@ -321,7 +323,7 @@ function DetailedView({ data }: { data: ProjectData }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {data.team.map((member) => {
                 const memberTasks = data.taskLists.flatMap((tl) =>
-                  tl.tasks.filter((t) => t.assignee === member),
+                  tl.tasks.filter((t) => t.assignees.includes(member)),
                 )
                 const memberCompleted = memberTasks.filter(
                   (t) => t.status === "completed",
