@@ -1,4 +1,9 @@
-import { getProjectData, type Task, type TaskList } from "@/lib/data"
+import {
+  getProjectData,
+  getTeamMembers,
+  type Task,
+  type TaskList,
+} from "@/lib/data"
 import { requireRole } from "@/lib/session"
 import { LogoutButton } from "@/components/logout-button"
 import Link from "next/link"
@@ -9,6 +14,8 @@ import {
   createTaskAction,
   updateTaskAction,
   deleteTaskAction,
+  addTeamMemberAction,
+  deleteTeamMemberAction,
 } from "./actions"
 
 export const dynamic = "force-dynamic"
@@ -65,7 +72,7 @@ function TaskListFields({ taskList }: { taskList?: TaskList }) {
   )
 }
 
-function TaskFields({ task }: { task?: Task }) {
+function TaskFields({ task, team }: { task?: Task; team: string[] }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       <fieldset className="fieldset md:col-span-2">
@@ -87,11 +94,23 @@ function TaskFields({ task }: { task?: Task }) {
       </fieldset>
       <fieldset className="fieldset">
         <legend className="fieldset-legend">Assignee</legend>
-        <input
+        <select
           name="assignee"
-          defaultValue={task?.assignee}
-          className="input w-full"
-        />
+          defaultValue={task?.assignee ?? ""}
+          className="select w-full"
+        >
+          <option value="">Unassigned</option>
+          {team.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+          {task?.assignee &&
+            task.assignee.trim().length > 0 &&
+            !team.includes(task.assignee) && (
+              <option value={task.assignee}>{task.assignee}</option>
+            )}
+        </select>
       </fieldset>
       <fieldset className="fieldset">
         <legend className="fieldset-legend">Story points</legend>
@@ -161,7 +180,11 @@ function TaskFields({ task }: { task?: Task }) {
 
 export default async function ManagePage() {
   await requireRole("editor")
-  const data = await getProjectData()
+  const [data, teamMembers] = await Promise.all([
+    getProjectData(),
+    getTeamMembers(),
+  ])
+  const teamNames = teamMembers.map((m) => m.name)
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -175,6 +198,47 @@ export default async function ManagePage() {
               View Dashboard
             </Link>
             <LogoutButton />
+          </div>
+        </div>
+
+        {/* Team Members */}
+        <div className="collapse collapse-arrow bg-base-100 shadow-sm mb-6">
+          <input type="checkbox" />
+          <div className="collapse-title font-semibold">Team Members</div>
+          <div className="collapse-content space-y-3">
+            {teamMembers.length === 0 && (
+              <p className="text-sm text-base-content/60">
+                No team members yet.
+              </p>
+            )}
+            {teamMembers.map((member) => (
+              <div
+                key={member.id}
+                className="flex items-center justify-between gap-3 rounded-box border border-base-300 px-4 py-2"
+              >
+                <span className="text-sm font-medium">{member.name}</span>
+                <form action={deleteTeamMemberAction}>
+                  <input type="hidden" name="id" value={member.id} />
+                  <button
+                    type="submit"
+                    className="btn btn-error btn-xs btn-soft"
+                  >
+                    Remove
+                  </button>
+                </form>
+              </div>
+            ))}
+            <form action={addTeamMemberAction} className="flex gap-2 pt-1">
+              <input
+                name="name"
+                required
+                placeholder="Full name"
+                className="input input-sm flex-1"
+              />
+              <button type="submit" className="btn btn-primary btn-sm">
+                Add member
+              </button>
+            </form>
           </div>
         </div>
 
@@ -298,7 +362,7 @@ export default async function ManagePage() {
                               name="taskId"
                               value={task.id}
                             />
-                            <TaskFields task={task} />
+                            <TaskFields task={task} team={teamNames} />
                             <button
                               type="submit"
                               className="btn btn-primary btn-sm"
@@ -325,7 +389,7 @@ export default async function ManagePage() {
                         name="taskListId"
                         value={taskList.id}
                       />
-                      <TaskFields />
+                      <TaskFields team={teamNames} />
                       <button type="submit" className="btn btn-primary btn-sm">
                         Add task
                       </button>

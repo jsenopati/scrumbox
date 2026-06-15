@@ -81,11 +81,6 @@ export default async function DashboardPage() {
             <div className="stat-value text-warning">{activeTasks}</div>
             <div className="stat-desc">In progress</div>
           </div>
-          <div className="stat">
-            <div className="stat-title">Team Size</div>
-            <div className="stat-value">{data.team.length}</div>
-            <div className="stat-desc">Team members</div>
-          </div>
         </div>
 
         {data.taskLists.length === 0 && (
@@ -208,46 +203,6 @@ export default async function DashboardPage() {
             )
           })}
         </div>
-
-        {/* Team Section */}
-        {data.team.length > 0 && (
-          <div className="card bg-base-100 shadow mt-8">
-            <div className="card-body">
-              <h2 className="card-title">Team Members</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {data.team.map((member) => {
-                  const memberTasks = data.taskLists.flatMap((tl) =>
-                    tl.tasks.filter((t) => t.assignee === member),
-                  )
-                  const memberCompleted = memberTasks.filter(
-                    (t) => t.status === "completed",
-                  ).length
-                  const memberInProgress = memberTasks.filter(
-                    (t) => t.status === "in-progress",
-                  ).length
-
-                  return (
-                    <div
-                      key={member}
-                      className="rounded-box border border-base-300 p-4"
-                    >
-                      <div className="font-semibold">{member}</div>
-                      <div className="text-sm text-base-content/60 mt-2 space-y-1">
-                        <div>Total tasks: {memberTasks.length}</div>
-                        <div className="text-success">
-                          Completed: {memberCompleted}
-                        </div>
-                        <div className="text-warning">
-                          In progress: {memberInProgress}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )

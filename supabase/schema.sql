@@ -31,3 +31,10 @@ create table if not exists tasks (
 );
 
 create index if not exists tasks_task_list_id_idx on tasks (task_list_id);
+
+-- team_members: explicit roster used for the assignee dropdown
+create table if not exists team_members (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null unique,
+  created_at timestamptz not null default now()
+);

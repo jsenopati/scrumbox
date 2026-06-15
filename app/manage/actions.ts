@@ -9,6 +9,8 @@ import {
   addTask,
   updateTask,
   deleteTask,
+  addTeamMember,
+  deleteTeamMember,
   type Task,
 } from "@/lib/data"
 
@@ -167,4 +169,28 @@ export async function deleteTaskAction(formData: FormData) {
 
   revalidatePath("/manage")
   revalidatePath("/dashboard")
+}
+
+// --- team member actions ----------------------------------------------------
+
+export async function addTeamMemberAction(formData: FormData) {
+  await requireRole("editor")
+
+  const name = str(formData, "name")
+  if (!name) throw new Error("Name is required")
+
+  await addTeamMember(name)
+
+  revalidatePath("/manage")
+}
+
+export async function deleteTeamMemberAction(formData: FormData) {
+  await requireRole("editor")
+
+  const id = str(formData, "id")
+  if (!id) throw new Error("Team member id is required")
+
+  await deleteTeamMember(id)
+
+  revalidatePath("/manage")
 }
