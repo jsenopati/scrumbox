@@ -95,13 +95,22 @@ function TaskFields({ task }: { task?: Task }) {
       </fieldset>
       <fieldset className="fieldset">
         <legend className="fieldset-legend">Story points</legend>
-        <input
-          name="storyPoints"
-          type="number"
-          min="0"
-          defaultValue={task?.storyPoints ?? 0}
-          className="input w-full"
-        />
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            name="trackStoryPoints"
+            defaultChecked={task?.storyPoints != null}
+            className="toggle toggle-sm peer"
+          />
+          <span className="label-text">Track story points</span>
+          <input
+            name="storyPoints"
+            type="number"
+            min="0"
+            defaultValue={task?.storyPoints ?? 0}
+            className="input input-sm w-24 ml-auto hidden peer-checked:block"
+          />
+        </div>
       </fieldset>
       <fieldset className="fieldset">
         <legend className="fieldset-legend">Status</legend>
@@ -246,8 +255,12 @@ export default async function ManagePage() {
                             <span>{task.priority}</span>
                             <span>•</span>
                             <span>{task.assignee || "Unassigned"}</span>
-                            <span>•</span>
-                            <span>{task.storyPoints} pts</span>
+                            {task.storyPoints != null && (
+                              <>
+                                <span>•</span>
+                                <span>{task.storyPoints} pts</span>
+                              </>
+                            )}
                           </div>
                         </div>
                         <form action={deleteTaskAction}>

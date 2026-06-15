@@ -26,6 +26,9 @@ export default async function DashboardPage() {
   const allStoryPoints = calculateStoryPoints(
     data.taskLists.flatMap((tl) => tl.tasks),
   )
+  const anyStoryPoints = data.taskLists.some((tl) =>
+    tl.tasks.some((t) => t.storyPoints != null),
+  )
 
   const activeTasks = data.taskLists.reduce(
     (sum, tl) =>
@@ -62,13 +65,15 @@ export default async function DashboardPage() {
               {completedTasks} of {totalTasks} tasks
             </div>
           </div>
-          <div className="stat">
-            <div className="stat-title">Story Points</div>
-            <div className="stat-value text-success">
-              {allStoryPoints.completed}/{allStoryPoints.total}
+          {anyStoryPoints && (
+            <div className="stat">
+              <div className="stat-title">Story Points</div>
+              <div className="stat-value text-success">
+                {allStoryPoints.completed}/{allStoryPoints.total}
+              </div>
+              <div className="stat-desc">{storyPointPct}% complete</div>
             </div>
-            <div className="stat-desc">{storyPointPct}% complete</div>
-          </div>
+          )}
           <div className="stat">
             <div className="stat-title">Active Tasks</div>
             <div className="stat-value text-warning">{activeTasks}</div>
@@ -94,6 +99,9 @@ export default async function DashboardPage() {
           {data.taskLists.map((taskList) => {
             const progress = calculateProgress(taskList.tasks)
             const storyPoints = calculateStoryPoints(taskList.tasks)
+            const listHasStoryPoints = taskList.tasks.some(
+              (t) => t.storyPoints != null,
+            )
 
             return (
               <div
@@ -123,9 +131,12 @@ export default async function DashboardPage() {
                   {/* Progress */}
                   <div className="flex justify-between text-sm mb-1">
                     <span>Progress: {progress}%</span>
-                    <span>
-                      Story Points: {storyPoints.completed}/{storyPoints.total}
-                    </span>
+                    {listHasStoryPoints && (
+                      <span>
+                        Story Points: {storyPoints.completed}/
+                        {storyPoints.total}
+                      </span>
+                    )}
                   </div>
                   <progress
                     className="progress progress-primary w-full"
@@ -160,8 +171,12 @@ export default async function DashboardPage() {
                         </p>
                         <div className="flex flex-wrap gap-2 items-center text-sm text-base-content/60">
                           <span className="font-medium">{task.assignee}</span>
-                          <span>•</span>
-                          <span>{task.storyPoints} pts</span>
+                          {task.storyPoints != null && (
+                            <>
+                              <span>•</span>
+                              <span>{task.storyPoints} pts</span>
+                            </>
+                          )}
                           {task.dueDate && (
                             <>
                               <span>•</span>

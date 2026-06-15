@@ -19,7 +19,7 @@ create table if not exists tasks (
   title         text not null,
   description   text not null default '',
   assignee      text not null default '',
-  story_points  int  not null default 0,
+  story_points  int,
   status        text not null default 'not-started'
                 check (status in ('not-started','in-progress','completed')),
   priority      text not null default 'medium'

@@ -41,6 +41,12 @@ function parsePriority(formData: FormData): Task["priority"] {
   return value === "high" || value === "low" ? value : "medium"
 }
 
+function parseStoryPoints(formData: FormData): number | null {
+  if (formData.get("trackStoryPoints") == null) return null
+  const points = Number.parseInt(str(formData, "storyPoints"), 10)
+  return Number.isFinite(points) ? points : 0
+}
+
 // --- task list actions ------------------------------------------------------
 
 export async function createTaskListAction(formData: FormData) {
@@ -102,13 +108,11 @@ export async function createTaskAction(formData: FormData) {
   const title = str(formData, "title")
   if (!title) throw new Error("Task title is required")
 
-  const storyPoints = Number.parseInt(str(formData, "storyPoints"), 10)
-
   await addTask(taskListId, {
     title,
     description: str(formData, "description"),
     assignee: str(formData, "assignee"),
-    storyPoints: Number.isFinite(storyPoints) ? storyPoints : 0,
+    storyPoints: parseStoryPoints(formData),
     status: parseStatus(formData),
     priority: parsePriority(formData),
     dueDate: optionalStr(formData, "dueDate"),
@@ -128,13 +132,11 @@ export async function updateTaskAction(formData: FormData) {
     throw new Error("Task list id and task id are required")
   }
 
-  const storyPoints = Number.parseInt(str(formData, "storyPoints"), 10)
-
   await updateTask(taskListId, taskId, {
     title: str(formData, "title"),
     description: str(formData, "description"),
     assignee: str(formData, "assignee"),
-    storyPoints: Number.isFinite(storyPoints) ? storyPoints : 0,
+    storyPoints: parseStoryPoints(formData),
     status: parseStatus(formData),
     priority: parsePriority(formData),
     dueDate: optionalStr(formData, "dueDate"),

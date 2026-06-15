@@ -5,7 +5,7 @@ export interface Task {
   title: string
   description: string
   assignee: string
-  storyPoints: number
+  storyPoints: number | null
   status: "not-started" | "in-progress" | "completed"
   priority: "low" | "medium" | "high"
   dueDate?: string
@@ -38,7 +38,7 @@ interface TaskRow {
   title: string
   description: string
   assignee: string
-  story_points: number
+  story_points: number | null
   status: Task["status"]
   priority: Task["priority"]
   due_date: string | null
@@ -257,9 +257,9 @@ export function calculateStoryPoints(tasks: Task[]): {
   total: number
   completed: number
 } {
-  const total = tasks.reduce((sum, task) => sum + task.storyPoints, 0)
+  const total = tasks.reduce((sum, task) => sum + (task.storyPoints ?? 0), 0)
   const completed = tasks
     .filter((t) => t.status === "completed")
-    .reduce((sum, task) => sum + task.storyPoints, 0)
+    .reduce((sum, task) => sum + (task.storyPoints ?? 0), 0)
   return { total, completed }
 }
