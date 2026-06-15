@@ -19,11 +19,11 @@ create table if not exists tasks (
   title         text not null,
   description   text not null default '',
   assignee      text not null default '',
-  story_points  int  not null default 0,
+  story_points  int,
   status        text not null default 'not-started'
                 check (status in ('not-started','in-progress','completed')),
   priority      text not null default 'medium'
-                check (priority in ('low','medium','high')),
+                check (priority in ('backlog','low','medium','high','asap')),
   due_date      date,
   tags          text[] not null default '{}',
   created_at    timestamptz not null default now(),
@@ -31,3 +31,10 @@ create table if not exists tasks (
 );
 
 create index if not exists tasks_task_list_id_idx on tasks (task_list_id);
+
+-- team_members: explicit roster used for the assignee dropdown
+create table if not exists team_members (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null unique,
+  created_at timestamptz not null default now()
+);

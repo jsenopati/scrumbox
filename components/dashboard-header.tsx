@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
+import { ThemeToggle } from "@/components/theme-toggle"
 import type { Role } from "@/lib/session"
 
 interface DashboardHeaderProps {
@@ -19,6 +20,7 @@ export function DashboardHeader({ lastUpdated, role }: DashboardHeaderProps) {
         </div>
       </div>
       <div className="navbar-end gap-2">
+        <ThemeToggle />
         {role === "editor" && (
           <Link href="/manage" className="btn btn-primary btn-sm">
             Manage

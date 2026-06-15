@@ -9,6 +9,8 @@ import {
   addTask,
   updateTask,
   deleteTask,
+  addTeamMember,
+  deleteTeamMember,
   type Task,
 } from "@/lib/data"
 
@@ -38,7 +40,20 @@ function parseStatus(formData: FormData): Task["status"] {
 
 function parsePriority(formData: FormData): Task["priority"] {
   const value = str(formData, "priority")
-  return value === "high" || value === "low" ? value : "medium"
+  if (
+    value === "asap" ||
+    value === "high" ||
+    value === "low" ||
+    value === "backlog"
+  )
+    return value
+  return "medium"
+}
+
+function parseStoryPoints(formData: FormData): number | null {
+  if (formData.get("trackStoryPoints") == null) return null
+  const points = Number.parseInt(str(formData, "storyPoints"), 10)
+  return Number.isFinite(points) ? points : 0
 }
 
 // --- task list actions ------------------------------------------------------
@@ -102,13 +117,11 @@ export async function createTaskAction(formData: FormData) {
   const title = str(formData, "title")
   if (!title) throw new Error("Task title is required")
 
-  const storyPoints = Number.parseInt(str(formData, "storyPoints"), 10)
-
   await addTask(taskListId, {
     title,
     description: str(formData, "description"),
     assignee: str(formData, "assignee"),
-    storyPoints: Number.isFinite(storyPoints) ? storyPoints : 0,
+    storyPoints: parseStoryPoints(formData),
     status: parseStatus(formData),
     priority: parsePriority(formData),
     dueDate: optionalStr(formData, "dueDate"),
@@ -128,13 +141,11 @@ export async function updateTaskAction(formData: FormData) {
     throw new Error("Task list id and task id are required")
   }
 
-  const storyPoints = Number.parseInt(str(formData, "storyPoints"), 10)
-
   await updateTask(taskListId, taskId, {
     title: str(formData, "title"),
     description: str(formData, "description"),
     assignee: str(formData, "assignee"),
-    storyPoints: Number.isFinite(storyPoints) ? storyPoints : 0,
+    storyPoints: parseStoryPoints(formData),
     status: parseStatus(formData),
     priority: parsePriority(formData),
     dueDate: optionalStr(formData, "dueDate"),
@@ -158,4 +169,28 @@ export async function deleteTaskAction(formData: FormData) {
 
   revalidatePath("/manage")
   revalidatePath("/dashboard")
+}
+
+// --- team member actions ----------------------------------------------------
+
+export async function addTeamMemberAction(formData: FormData) {
+  await requireRole("editor")
+
+  const name = str(formData, "name")
+  if (!name) throw new Error("Name is required")
+
+  await addTeamMember(name)
+
+  revalidatePath("/manage")
+}
+
+export async function deleteTeamMemberAction(formData: FormData) {
+  await requireRole("editor")
+
+  const id = str(formData, "id")
+  if (!id) throw new Error("Team member id is required")
+
+  await deleteTeamMember(id)
+
+  revalidatePath("/manage")
 }

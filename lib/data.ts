@@ -5,9 +5,9 @@ export interface Task {
   title: string
   description: string
   assignee: string
-  storyPoints: number
+  storyPoints: number | null
   status: "not-started" | "in-progress" | "completed"
-  priority: "low" | "medium" | "high"
+  priority: "backlog" | "low" | "medium" | "high" | "asap"
   dueDate?: string
   tags: string[]
   createdAt: string
@@ -38,7 +38,7 @@ interface TaskRow {
   title: string
   description: string
   assignee: string
-  story_points: number
+  story_points: number | null
   status: Task["status"]
   priority: Task["priority"]
   due_date: string | null
@@ -245,21 +245,39 @@ export async function deleteTask(
   if (error) throw new Error(error.message)
 }
 
+// --- team member writes -----------------------------------------------------
+
+export interface TeamMember {
+  id: string
+  name: string
+}
+
+export async function getTeamMembers(): Promise<TeamMember[]> {
+  const { data, error } = await supabase
+    .from("team_members")
+    .select("id, name")
+    .order("name", { ascending: true })
+
+  if (error) throw new Error(error.message)
+  return (data ?? []) as TeamMember[]
+}
+
+export async function addTeamMember(name: string): Promise<TeamMember> {
+  const { data, error } = await supabase
+    .from("team_members")
+    .insert({ name })
+    .select("id, name")
+    .single()
+
+  if (error) throw new Error(error.message)
+  return data as TeamMember
+}
+
+export async function deleteTeamMember(id: string): Promise<void> {
+  const { error } = await supabase.from("team_members").delete().eq("id", id)
+  if (error) throw new Error(error.message)
+}
+
 // --- computed metrics -------------------------------------------------------
 
-export function calculateProgress(tasks: Task[]): number {
-  if (tasks.length === 0) return 0
-  const completed = tasks.filter((t) => t.status === "completed").length
-  return Math.round((completed / tasks.length) * 100)
-}
-
-export function calculateStoryPoints(tasks: Task[]): {
-  total: number
-  completed: number
-} {
-  const total = tasks.reduce((sum, task) => sum + task.storyPoints, 0)
-  const completed = tasks
-    .filter((t) => t.status === "completed")
-    .reduce((sum, task) => sum + task.storyPoints, 0)
-  return { total, completed }
-}
+export { calculateProgress, calculateStoryPoints } from "./metrics"
