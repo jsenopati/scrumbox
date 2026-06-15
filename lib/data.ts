@@ -4,7 +4,7 @@ export interface Task {
   id: string
   title: string
   description: string
-  assignee: string
+  assignees: string[]
   storyPoints: number | null
   status: "not-started" | "in-progress" | "completed"
   priority: "backlog" | "low" | "medium" | "high" | "asap"
@@ -37,7 +37,7 @@ interface TaskRow {
   task_list_id: string
   title: string
   description: string
-  assignee: string
+  assignees: string[] | null
   story_points: number | null
   status: Task["status"]
   priority: Task["priority"]
@@ -62,7 +62,7 @@ function mapTaskRow(row: TaskRow): Task {
     id: row.id,
     title: row.title,
     description: row.description,
-    assignee: row.assignee,
+    assignees: row.assignees ?? [],
     storyPoints: row.story_points,
     status: row.status,
     priority: row.priority,
@@ -110,8 +110,8 @@ export async function getProjectData(): Promise<ProjectData> {
   const team = Array.from(
     new Set(
       taskRows
-        .map((row) => row.assignee)
-        .filter((assignee) => assignee.trim().length > 0),
+        .flatMap((row) => row.assignees ?? [])
+        .filter((name) => name.trim().length > 0),
     ),
   ).sort()
 
@@ -191,7 +191,7 @@ export async function addTask(
       task_list_id: taskListId,
       title: task.title,
       description: task.description,
-      assignee: task.assignee,
+      assignees: task.assignees,
       story_points: task.storyPoints,
       status: task.status,
       priority: task.priority,
@@ -215,7 +215,7 @@ export async function updateTask(
   }
   if (updates.title !== undefined) patch.title = updates.title
   if (updates.description !== undefined) patch.description = updates.description
-  if (updates.assignee !== undefined) patch.assignee = updates.assignee
+  if (updates.assignees !== undefined) patch.assignees = updates.assignees
   if (updates.storyPoints !== undefined)
     patch.story_points = updates.storyPoints
   if (updates.status !== undefined) patch.status = updates.status
