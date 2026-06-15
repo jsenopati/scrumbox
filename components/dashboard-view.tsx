@@ -45,7 +45,7 @@ export function DashboardView({
   totalTasks,
   activeTasks,
 }: Props) {
-  const [simple, setSimple] = useState(false)
+  const [simple, setSimple] = useState(true)
 
   return (
     <>
@@ -78,16 +78,16 @@ export function DashboardView({
         {/* View toggle */}
         <div className="join shadow bg-base-100 rounded-box h-fit self-center">
           <button
-            className={`join-item btn btn-sm ${simple ? "btn-ghost" : "btn-neutral"}`}
-            onClick={() => setSimple(false)}
-          >
-            Detailed
-          </button>
-          <button
             className={`join-item btn btn-sm ${simple ? "btn-neutral" : "btn-ghost"}`}
             onClick={() => setSimple(true)}
           >
             Simple
+          </button>
+          <button
+            className={`join-item btn btn-sm ${simple ? "btn-ghost" : "btn-neutral"}`}
+            onClick={() => setSimple(false)}
+          >
+            Detailed
           </button>
         </div>
       </div>

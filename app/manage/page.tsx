@@ -6,6 +6,7 @@ import {
 } from "@/lib/data"
 import { requireRole } from "@/lib/session"
 import { LogoutButton } from "@/components/logout-button"
+import { ThemeToggle } from "@/components/theme-toggle"
 import Link from "next/link"
 import {
   createTaskListAction,
@@ -194,6 +195,7 @@ export default async function ManagePage() {
             <h1 className="text-xl font-bold">Manage Tasks</h1>
           </div>
           <div className="navbar-end gap-2">
+            <ThemeToggle />
             <Link href="/dashboard" className="btn btn-ghost btn-sm">
               View Dashboard
             </Link>

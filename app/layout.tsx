@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
+import { cookies } from "next/headers"
+import { ThemeProvider } from "@/context/theme"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -17,17 +19,20 @@ export const metadata: Metadata = {
   description: "Lightweight project tracking for executive reporting",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const cookieStore = await cookies()
+  const savedTheme = cookieStore.get("theme")?.value ?? "nord"
+
   return (
-    <html lang="en" data-theme="dim" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-base-200 text-base-content`}
       >
-        {children}
+        <ThemeProvider initialTheme={savedTheme}>{children}</ThemeProvider>
       </body>
     </html>
   )
