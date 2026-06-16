@@ -12,6 +12,8 @@ import {
   createTaskListAction,
   updateTaskListAction,
   deleteTaskListAction,
+  archiveTaskListAction,
+  unarchiveTaskListAction,
   createTaskAction,
   updateTaskAction,
   deleteTaskAction,
@@ -293,12 +295,20 @@ export default async function ManagePage() {
                       </span>
                     )}
                   </div>
-                  <form action={deleteTaskListAction}>
-                    <input type="hidden" name="id" value={taskList.id} />
-                    <button type="submit" className="btn btn-error btn-sm">
-                      Delete list
-                    </button>
-                  </form>
+                  <div className="flex flex-wrap gap-2">
+                    <form action={archiveTaskListAction}>
+                      <input type="hidden" name="id" value={taskList.id} />
+                      <button type="submit" className="btn btn-warning btn-sm">
+                        Archive list
+                      </button>
+                    </form>
+                    <form action={deleteTaskListAction}>
+                      <input type="hidden" name="id" value={taskList.id} />
+                      <button type="submit" className="btn btn-error btn-sm">
+                        Delete list
+                      </button>
+                    </form>
+                  </div>
                 </div>
 
                 {/* Edit task list */}
@@ -417,6 +427,68 @@ export default async function ManagePage() {
             </div>
           ))}
         </div>
+
+        {/* Archived task lists */}
+        {data.archivedTaskLists.length > 0 && (
+          <div className="collapse collapse-arrow bg-base-100 shadow-sm mt-6">
+            <input type="checkbox" />
+            <div className="collapse-title font-semibold text-base-content/60">
+              Archived ({data.archivedTaskLists.length})
+            </div>
+            <div className="collapse-content space-y-4">
+              {data.archivedTaskLists.map((taskList) => (
+                <div
+                  key={taskList.id}
+                  className="rounded-box border border-base-300 p-4 opacity-70"
+                >
+                  <div className="flex flex-wrap justify-between items-start gap-3">
+                    <div>
+                      <h2 className="font-bold text-lg">{taskList.name}</h2>
+                      {taskList.description && (
+                        <p className="text-base-content/60 text-sm mt-1">
+                          {taskList.description}
+                        </p>
+                      )}
+                      {taskList.sprint && (
+                        <span className="badge badge-neutral mt-2">
+                          {taskList.sprint}
+                        </span>
+                      )}
+                      <p className="text-xs text-base-content/40 mt-2">
+                        Archived{" "}
+                        {taskList.archivedAt
+                          ? new Date(taskList.archivedAt).toLocaleDateString()
+                          : ""}
+                        {" "}· {taskList.tasks.length} task
+                        {taskList.tasks.length !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <form action={unarchiveTaskListAction}>
+                        <input type="hidden" name="id" value={taskList.id} />
+                        <button
+                          type="submit"
+                          className="btn btn-ghost btn-sm"
+                        >
+                          Unarchive
+                        </button>
+                      </form>
+                      <form action={deleteTaskListAction}>
+                        <input type="hidden" name="id" value={taskList.id} />
+                        <button
+                          type="submit"
+                          className="btn btn-error btn-sm btn-soft"
+                        >
+                          Delete
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

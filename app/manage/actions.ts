@@ -6,6 +6,8 @@ import {
   addTaskList,
   updateTaskList,
   deleteTaskList,
+  archiveTaskList,
+  unarchiveTaskList,
   addTask,
   updateTask,
   deleteTask,
@@ -105,6 +107,30 @@ export async function deleteTaskListAction(formData: FormData) {
   if (!id) throw new Error("Task list id is required")
 
   await deleteTaskList(id)
+
+  revalidatePath("/manage")
+  revalidatePath("/dashboard")
+}
+
+export async function archiveTaskListAction(formData: FormData) {
+  await requireRole("editor")
+
+  const id = str(formData, "id")
+  if (!id) throw new Error("Task list id is required")
+
+  await archiveTaskList(id)
+
+  revalidatePath("/manage")
+  revalidatePath("/dashboard")
+}
+
+export async function unarchiveTaskListAction(formData: FormData) {
+  await requireRole("editor")
+
+  const id = str(formData, "id")
+  if (!id) throw new Error("Task list id is required")
+
+  await unarchiveTaskList(id)
 
   revalidatePath("/manage")
   revalidatePath("/dashboard")
