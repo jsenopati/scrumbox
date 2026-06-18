@@ -20,6 +20,7 @@ import {
   addTeamMemberAction,
   deleteTeamMemberAction,
 } from "./actions"
+import { SubmitButton } from "@/components/submit-button"
 
 export const dynamic = "force-dynamic"
 
@@ -254,9 +255,9 @@ export default async function ManagePage() {
                 placeholder="Full name"
                 className="input input-sm flex-1"
               />
-              <button type="submit" className="btn btn-primary btn-sm">
+              <SubmitButton className="btn btn-primary btn-sm">
                 Add member
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>
@@ -268,9 +269,9 @@ export default async function ManagePage() {
           <div className="collapse-content">
             <form action={createTaskListAction} className="space-y-4">
               <TaskListFields />
-              <button type="submit" className="btn btn-primary">
+              <SubmitButton className="btn btn-primary">
                 Create task list
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>
@@ -325,9 +326,9 @@ export default async function ManagePage() {
                     <form action={updateTaskListAction} className="space-y-4">
                       <input type="hidden" name="id" value={taskList.id} />
                       <TaskListFields taskList={taskList} />
-                      <button type="submit" className="btn btn-primary btn-sm">
+                      <SubmitButton className="btn btn-primary btn-sm">
                         Save changes
-                      </button>
+                      </SubmitButton>
                     </form>
                   </div>
                 </div>
@@ -394,12 +395,9 @@ export default async function ManagePage() {
                               value={task.id}
                             />
                             <TaskFields task={task} team={teamNames} />
-                            <button
-                              type="submit"
-                              className="btn btn-primary btn-sm"
-                            >
+                            <SubmitButton className="btn btn-primary btn-sm">
                               Save task
-                            </button>
+                            </SubmitButton>
                           </form>
                         </div>
                       </div>
@@ -421,9 +419,9 @@ export default async function ManagePage() {
                         value={taskList.id}
                       />
                       <TaskFields team={teamNames} />
-                      <button type="submit" className="btn btn-primary btn-sm">
+                      <SubmitButton className="btn btn-primary btn-sm">
                         Add task
-                      </button>
+                      </SubmitButton>
                     </form>
                   </div>
                 </div>
@@ -462,20 +460,17 @@ export default async function ManagePage() {
                         Archived{" "}
                         {taskList.archivedAt
                           ? new Date(taskList.archivedAt).toLocaleDateString()
-                          : ""}
-                        {" "}· {taskList.tasks.length} task
+                          : ""}{" "}
+                        · {taskList.tasks.length} task
                         {taskList.tasks.length !== 1 ? "s" : ""}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <form action={unarchiveTaskListAction}>
                         <input type="hidden" name="id" value={taskList.id} />
-                        <button
-                          type="submit"
-                          className="btn btn-ghost btn-sm"
-                        >
+                        <SubmitButton className="btn btn-ghost btn-sm">
                           Unarchive
-                        </button>
+                        </SubmitButton>
                       </form>
                       <form action={deleteTaskListAction}>
                         <input type="hidden" name="id" value={taskList.id} />
