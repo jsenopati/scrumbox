@@ -130,6 +130,7 @@ function TaskFields({ task, team }: { task?: Task; team: string[] }) {
         <legend className="fieldset-legend">Story points</legend>
         <div className="flex items-center gap-3">
           <input
+            key={String(task?.storyPoints != null)}
             type="checkbox"
             name="trackStoryPoints"
             defaultChecked={task?.storyPoints != null}
@@ -137,6 +138,7 @@ function TaskFields({ task, team }: { task?: Task; team: string[] }) {
           />
           <span className="label-text">Track story points</span>
           <input
+            key={task?.storyPoints}
             name="storyPoints"
             type="number"
             min="0"
@@ -148,6 +150,7 @@ function TaskFields({ task, team }: { task?: Task; team: string[] }) {
       <fieldset className="fieldset">
         <legend className="fieldset-legend">Status</legend>
         <select
+          key={task?.status}
           name="status"
           defaultValue={task?.status ?? "not-started"}
           className="select w-full"
@@ -160,6 +163,7 @@ function TaskFields({ task, team }: { task?: Task; team: string[] }) {
       <fieldset className="fieldset">
         <legend className="fieldset-legend">Priority</legend>
         <select
+          key={task?.priority}
           name="priority"
           defaultValue={task?.priority ?? "medium"}
           className="select w-full"
