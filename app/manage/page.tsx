@@ -12,12 +12,15 @@ import {
   createTaskListAction,
   updateTaskListAction,
   deleteTaskListAction,
+  archiveTaskListAction,
+  unarchiveTaskListAction,
   createTaskAction,
   updateTaskAction,
   deleteTaskAction,
   addTeamMemberAction,
   deleteTeamMemberAction,
 } from "./actions"
+import { SubmitButton } from "@/components/submit-button"
 
 export const dynamic = "force-dynamic"
 
@@ -128,6 +131,7 @@ function TaskFields({ task, team }: { task?: Task; team: string[] }) {
         <legend className="fieldset-legend">Story points</legend>
         <div className="flex items-center gap-3">
           <input
+            key={String(task?.storyPoints != null)}
             type="checkbox"
             name="trackStoryPoints"
             defaultChecked={task?.storyPoints != null}
@@ -135,6 +139,7 @@ function TaskFields({ task, team }: { task?: Task; team: string[] }) {
           />
           <span className="label-text">Track story points</span>
           <input
+            key={task?.storyPoints}
             name="storyPoints"
             type="number"
             min="0"
@@ -146,6 +151,7 @@ function TaskFields({ task, team }: { task?: Task; team: string[] }) {
       <fieldset className="fieldset">
         <legend className="fieldset-legend">Status</legend>
         <select
+          key={task?.status}
           name="status"
           defaultValue={task?.status ?? "not-started"}
           className="select w-full"
@@ -158,6 +164,7 @@ function TaskFields({ task, team }: { task?: Task; team: string[] }) {
       <fieldset className="fieldset">
         <legend className="fieldset-legend">Priority</legend>
         <select
+          key={task?.priority}
           name="priority"
           defaultValue={task?.priority ?? "medium"}
           className="select w-full"
@@ -248,9 +255,9 @@ export default async function ManagePage() {
                 placeholder="Full name"
                 className="input input-sm flex-1"
               />
-              <button type="submit" className="btn btn-primary btn-sm">
+              <SubmitButton className="btn btn-primary btn-sm">
                 Add member
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>
@@ -262,9 +269,9 @@ export default async function ManagePage() {
           <div className="collapse-content">
             <form action={createTaskListAction} className="space-y-4">
               <TaskListFields />
-              <button type="submit" className="btn btn-primary">
+              <SubmitButton className="btn btn-primary">
                 Create task list
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>
@@ -293,12 +300,20 @@ export default async function ManagePage() {
                       </span>
                     )}
                   </div>
-                  <form action={deleteTaskListAction}>
-                    <input type="hidden" name="id" value={taskList.id} />
-                    <button type="submit" className="btn btn-error btn-sm">
-                      Delete list
-                    </button>
-                  </form>
+                  <div className="flex flex-wrap gap-2">
+                    <form action={archiveTaskListAction}>
+                      <input type="hidden" name="id" value={taskList.id} />
+                      <button type="submit" className="btn btn-warning btn-sm">
+                        Archive list
+                      </button>
+                    </form>
+                    <form action={deleteTaskListAction}>
+                      <input type="hidden" name="id" value={taskList.id} />
+                      <button type="submit" className="btn btn-error btn-sm">
+                        Delete list
+                      </button>
+                    </form>
+                  </div>
                 </div>
 
                 {/* Edit task list */}
@@ -311,9 +326,9 @@ export default async function ManagePage() {
                     <form action={updateTaskListAction} className="space-y-4">
                       <input type="hidden" name="id" value={taskList.id} />
                       <TaskListFields taskList={taskList} />
-                      <button type="submit" className="btn btn-primary btn-sm">
+                      <SubmitButton className="btn btn-primary btn-sm">
                         Save changes
-                      </button>
+                      </SubmitButton>
                     </form>
                   </div>
                 </div>
@@ -380,12 +395,9 @@ export default async function ManagePage() {
                               value={task.id}
                             />
                             <TaskFields task={task} team={teamNames} />
-                            <button
-                              type="submit"
-                              className="btn btn-primary btn-sm"
-                            >
+                            <SubmitButton className="btn btn-primary btn-sm">
                               Save task
-                            </button>
+                            </SubmitButton>
                           </form>
                         </div>
                       </div>
@@ -407,9 +419,9 @@ export default async function ManagePage() {
                         value={taskList.id}
                       />
                       <TaskFields team={teamNames} />
-                      <button type="submit" className="btn btn-primary btn-sm">
+                      <SubmitButton className="btn btn-primary btn-sm">
                         Add task
-                      </button>
+                      </SubmitButton>
                     </form>
                   </div>
                 </div>
@@ -417,6 +429,65 @@ export default async function ManagePage() {
             </div>
           ))}
         </div>
+
+        {/* Archived task lists */}
+        {data.archivedTaskLists.length > 0 && (
+          <div className="collapse collapse-arrow bg-base-100 shadow-sm mt-6">
+            <input type="checkbox" />
+            <div className="collapse-title font-semibold text-base-content/60">
+              Archived ({data.archivedTaskLists.length})
+            </div>
+            <div className="collapse-content space-y-4">
+              {data.archivedTaskLists.map((taskList) => (
+                <div
+                  key={taskList.id}
+                  className="rounded-box border border-base-300 p-4 opacity-70"
+                >
+                  <div className="flex flex-wrap justify-between items-start gap-3">
+                    <div>
+                      <h2 className="font-bold text-lg">{taskList.name}</h2>
+                      {taskList.description && (
+                        <p className="text-base-content/60 text-sm mt-1">
+                          {taskList.description}
+                        </p>
+                      )}
+                      {taskList.sprint && (
+                        <span className="badge badge-neutral mt-2">
+                          {taskList.sprint}
+                        </span>
+                      )}
+                      <p className="text-xs text-base-content/40 mt-2">
+                        Archived{" "}
+                        {taskList.archivedAt
+                          ? new Date(taskList.archivedAt).toLocaleDateString()
+                          : ""}{" "}
+                        · {taskList.tasks.length} task
+                        {taskList.tasks.length !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <form action={unarchiveTaskListAction}>
+                        <input type="hidden" name="id" value={taskList.id} />
+                        <SubmitButton className="btn btn-ghost btn-sm">
+                          Unarchive
+                        </SubmitButton>
+                      </form>
+                      <form action={deleteTaskListAction}>
+                        <input type="hidden" name="id" value={taskList.id} />
+                        <button
+                          type="submit"
+                          className="btn btn-error btn-sm btn-soft"
+                        >
+                          Delete
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

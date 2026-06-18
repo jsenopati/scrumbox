@@ -22,10 +22,12 @@ export interface TaskList {
   sprint?: string
   startDate?: string
   endDate?: string
+  archivedAt?: string
 }
 
 export interface ProjectData {
   taskLists: TaskList[]
+  archivedTaskLists: TaskList[]
   team: string[]
   lastUpdated: string
 }
@@ -54,6 +56,7 @@ interface TaskListRow {
   sprint: string | null
   start_date: string | null
   end_date: string | null
+  archived_at: string | null
   created_at: string
 }
 
@@ -74,6 +77,19 @@ function mapTaskRow(row: TaskRow): Task {
 }
 
 // --- reads ------------------------------------------------------------------
+
+function mapTaskListRow(row: TaskListRow, tasks: Task[]): TaskList {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    sprint: row.sprint ?? undefined,
+    startDate: row.start_date ?? undefined,
+    endDate: row.end_date ?? undefined,
+    archivedAt: row.archived_at ?? undefined,
+    tasks,
+  }
+}
 
 export async function getProjectData(): Promise<ProjectData> {
   const [listsResult, tasksResult] = await Promise.all([
@@ -97,15 +113,15 @@ export async function getProjectData(): Promise<ProjectData> {
     tasksByList.set(row.task_list_id, list)
   }
 
-  const taskLists: TaskList[] = listRows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    description: row.description,
-    sprint: row.sprint ?? undefined,
-    startDate: row.start_date ?? undefined,
-    endDate: row.end_date ?? undefined,
-    tasks: tasksByList.get(row.id) ?? [],
-  }))
+  const activeRows = listRows.filter((row) => row.archived_at == null)
+  const archivedRows = listRows.filter((row) => row.archived_at != null)
+
+  const taskLists = activeRows.map((row) =>
+    mapTaskListRow(row, tasksByList.get(row.id) ?? []),
+  )
+  const archivedTaskLists = archivedRows.map((row) =>
+    mapTaskListRow(row, tasksByList.get(row.id) ?? []),
+  )
 
   const team = Array.from(
     new Set(
@@ -121,6 +137,7 @@ export async function getProjectData(): Promise<ProjectData> {
 
   return {
     taskLists,
+    archivedTaskLists,
     team,
     lastUpdated: lastUpdated || new Date().toISOString(),
   }
@@ -129,7 +146,7 @@ export async function getProjectData(): Promise<ProjectData> {
 // --- task list writes -------------------------------------------------------
 
 export async function addTaskList(
-  taskList: Omit<TaskList, "id" | "tasks">,
+  taskList: Omit<TaskList, "id" | "tasks" | "archivedAt">,
 ): Promise<TaskList> {
   const { data, error } = await supabase
     .from("task_lists")
@@ -145,21 +162,28 @@ export async function addTaskList(
 
   if (error) throw new Error(error.message)
 
-  const row = data as TaskListRow
-  return {
-    id: row.id,
-    name: row.name,
-    description: row.description,
-    sprint: row.sprint ?? undefined,
-    startDate: row.start_date ?? undefined,
-    endDate: row.end_date ?? undefined,
-    tasks: [],
-  }
+  return mapTaskListRow(data as TaskListRow, [])
+}
+
+export async function archiveTaskList(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("task_lists")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", id)
+  if (error) throw new Error(error.message)
+}
+
+export async function unarchiveTaskList(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("task_lists")
+    .update({ archived_at: null })
+    .eq("id", id)
+  if (error) throw new Error(error.message)
 }
 
 export async function updateTaskList(
   id: string,
-  updates: Partial<Omit<TaskList, "id" | "tasks">>,
+  updates: Partial<Omit<TaskList, "id" | "tasks" | "archivedAt">>,
 ): Promise<void> {
   const patch: Record<string, unknown> = {}
   if (updates.name !== undefined) patch.name = updates.name

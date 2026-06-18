@@ -45,6 +45,7 @@ export function DashboardView({
   totalTasks,
   activeTasks,
 }: Props) {
+  const [archiveOpen, setArchiveOpen] = useState(false)
   const [simple, setSimple] = useState(true)
 
   return (
@@ -101,6 +102,57 @@ export function DashboardView({
       )}
 
       {simple ? <SimpleView data={data} /> : <DetailedView data={data} />}
+
+      {data.archivedTaskLists.length > 0 && (
+        <div className="mt-6">
+          <button
+            className="flex items-center gap-2 text-sm font-medium text-base-content/50 hover:text-base-content transition-colors mb-3"
+            onClick={() => setArchiveOpen((o) => !o)}
+          >
+            <span
+              className={`inline-block transition-transform ${
+                archiveOpen ? "rotate-90" : ""
+              }`}
+            >
+              ▶
+            </span>
+            Archived ({data.archivedTaskLists.length})
+          </button>
+          {archiveOpen && (
+            <div className="space-y-4 opacity-60">
+              {data.archivedTaskLists.map((taskList) => {
+                const progress = calculateProgress(taskList.tasks)
+                return (
+                  <div key={taskList.id} className="card bg-base-100 shadow-md">
+                    <div className="card-body p-4 gap-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h2 className="font-bold text-lg">{taskList.name}</h2>
+                          {taskList.sprint && (
+                            <span className="badge badge-neutral badge-sm">
+                              {taskList.sprint}
+                            </span>
+                          )}
+                          <span className="badge badge-ghost badge-sm">Archived</span>
+                        </div>
+                        <span className="text-sm text-base-content/50">
+                          {taskList.tasks.length} task
+                          {taskList.tasks.length !== 1 ? "s" : ""} · {progress}%
+                        </span>
+                      </div>
+                      <progress
+                        className="progress progress-primary w-full h-1.5"
+                        value={progress}
+                        max={100}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </>
   )
 }
