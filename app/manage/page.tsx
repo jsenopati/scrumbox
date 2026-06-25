@@ -19,6 +19,10 @@ import {
   deleteTaskAction,
   addTeamMemberAction,
   deleteTeamMemberAction,
+  moveTaskListUpAction,
+  moveTaskListDownAction,
+  moveTaskUpAction,
+  moveTaskDownAction,
 } from "./actions"
 import { SubmitButton } from "@/components/submit-button"
 
@@ -43,6 +47,19 @@ function TaskListFields({ taskList }: { taskList?: TaskList }) {
           defaultValue={taskList?.description}
           className="input w-full"
         />
+      </fieldset>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Section</legend>
+        <select
+          key={taskList?.section}
+          name="section"
+          defaultValue={taskList?.section ?? "focus"}
+          className="select w-full"
+        >
+          <option value="focus">Currently working on</option>
+          <option value="concurrent">Concurrent Tasks</option>
+          <option value="backlog">Backlog</option>
+        </select>
       </fieldset>
       <fieldset className="fieldset">
         <legend className="fieldset-legend">Sprint</legend>
@@ -294,13 +311,42 @@ export default async function ManagePage() {
                     <p className="text-base-content/60 text-sm mt-1">
                       {taskList.description}
                     </p>
-                    {taskList.sprint && (
-                      <span className="badge badge-neutral mt-2">
-                        {taskList.sprint}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {taskList.sprint && (
+                        <span className="badge badge-neutral">
+                          {taskList.sprint}
+                        </span>
+                      )}
+                      <span className="badge badge-outline badge-sm">
+                        {taskList.section === "focus"
+                          ? "Currently working on"
+                          : taskList.section === "concurrent"
+                            ? "Concurrent"
+                            : "Backlog"}
                       </span>
-                    )}
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    <form action={moveTaskListUpAction}>
+                      <input type="hidden" name="id" value={taskList.id} />
+                      <button
+                        type="submit"
+                        className="btn btn-ghost btn-sm btn-square"
+                        title="Move up"
+                      >
+                        ↑
+                      </button>
+                    </form>
+                    <form action={moveTaskListDownAction}>
+                      <input type="hidden" name="id" value={taskList.id} />
+                      <button
+                        type="submit"
+                        className="btn btn-ghost btn-sm btn-square"
+                        title="Move down"
+                      >
+                        ↓
+                      </button>
+                    </form>
                     <form action={archiveTaskListAction}>
                       <input type="hidden" name="id" value={taskList.id} />
                       <button type="submit" className="btn btn-warning btn-sm">
@@ -361,20 +407,64 @@ export default async function ManagePage() {
                             )}
                           </div>
                         </div>
-                        <form action={deleteTaskAction}>
-                          <input
-                            type="hidden"
-                            name="taskListId"
-                            value={taskList.id}
-                          />
-                          <input type="hidden" name="taskId" value={task.id} />
-                          <button
-                            type="submit"
-                            className="btn btn-error btn-sm btn-soft"
-                          >
-                            Delete
-                          </button>
-                        </form>
+                        <div className="flex items-center gap-1">
+                          <form action={moveTaskUpAction}>
+                            <input
+                              type="hidden"
+                              name="taskListId"
+                              value={taskList.id}
+                            />
+                            <input
+                              type="hidden"
+                              name="taskId"
+                              value={task.id}
+                            />
+                            <button
+                              type="submit"
+                              className="btn btn-ghost btn-xs btn-square"
+                              title="Move up"
+                            >
+                              ↑
+                            </button>
+                          </form>
+                          <form action={moveTaskDownAction}>
+                            <input
+                              type="hidden"
+                              name="taskListId"
+                              value={taskList.id}
+                            />
+                            <input
+                              type="hidden"
+                              name="taskId"
+                              value={task.id}
+                            />
+                            <button
+                              type="submit"
+                              className="btn btn-ghost btn-xs btn-square"
+                              title="Move down"
+                            >
+                              ↓
+                            </button>
+                          </form>
+                          <form action={deleteTaskAction}>
+                            <input
+                              type="hidden"
+                              name="taskListId"
+                              value={taskList.id}
+                            />
+                            <input
+                              type="hidden"
+                              name="taskId"
+                              value={task.id}
+                            />
+                            <button
+                              type="submit"
+                              className="btn btn-error btn-sm btn-soft"
+                            >
+                              Delete
+                            </button>
+                          </form>
+                        </div>
                       </div>
 
                       <div className="collapse collapse-arrow bg-base-200 mt-3">

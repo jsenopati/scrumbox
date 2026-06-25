@@ -13,6 +13,8 @@ import {
   deleteTask,
   addTeamMember,
   deleteTeamMember,
+  reorderTaskList,
+  reorderTask,
   type Task,
 } from "@/lib/data"
 
@@ -56,6 +58,12 @@ function parsePriority(formData: FormData): Task["priority"] {
   return "medium"
 }
 
+function parseSection(formData: FormData): "focus" | "concurrent" | "backlog" {
+  const value = str(formData, "section")
+  if (value === "concurrent" || value === "backlog") return value
+  return "focus"
+}
+
 function parseStoryPoints(formData: FormData): number | null {
   if (formData.get("trackStoryPoints") == null) return null
   const points = Number.parseInt(str(formData, "storyPoints"), 10)
@@ -76,6 +84,8 @@ export async function createTaskListAction(formData: FormData) {
     sprint: optionalStr(formData, "sprint"),
     startDate: optionalStr(formData, "startDate"),
     endDate: optionalStr(formData, "endDate"),
+    section: parseSection(formData),
+    sortOrder: 0,
   })
 
   revalidatePath("/manage")
@@ -94,6 +104,7 @@ export async function updateTaskListAction(formData: FormData) {
     sprint: optionalStr(formData, "sprint"),
     startDate: optionalStr(formData, "startDate"),
     endDate: optionalStr(formData, "endDate"),
+    section: parseSection(formData),
   })
 
   revalidatePath("/manage")
@@ -223,4 +234,46 @@ export async function deleteTeamMemberAction(formData: FormData) {
   await deleteTeamMember(id)
 
   revalidatePath("/manage")
+}
+
+// --- reorder actions --------------------------------------------------------
+
+export async function moveTaskListUpAction(formData: FormData) {
+  await requireRole("editor")
+  const id = str(formData, "id")
+  if (!id) throw new Error("Task list id is required")
+  await reorderTaskList(id, "up")
+  revalidatePath("/manage")
+  revalidatePath("/dashboard")
+}
+
+export async function moveTaskListDownAction(formData: FormData) {
+  await requireRole("editor")
+  const id = str(formData, "id")
+  if (!id) throw new Error("Task list id is required")
+  await reorderTaskList(id, "down")
+  revalidatePath("/manage")
+  revalidatePath("/dashboard")
+}
+
+export async function moveTaskUpAction(formData: FormData) {
+  await requireRole("editor")
+  const taskListId = str(formData, "taskListId")
+  const taskId = str(formData, "taskId")
+  if (!taskListId || !taskId)
+    throw new Error("Task list id and task id are required")
+  await reorderTask(taskListId, taskId, "up")
+  revalidatePath("/manage")
+  revalidatePath("/dashboard")
+}
+
+export async function moveTaskDownAction(formData: FormData) {
+  await requireRole("editor")
+  const taskListId = str(formData, "taskListId")
+  const taskId = str(formData, "taskId")
+  if (!taskListId || !taskId)
+    throw new Error("Task list id and task id are required")
+  await reorderTask(taskListId, taskId, "down")
+  revalidatePath("/manage")
+  revalidatePath("/dashboard")
 }

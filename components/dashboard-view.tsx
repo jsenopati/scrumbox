@@ -158,214 +158,203 @@ export function DashboardView({
 }
 
 // ---------------------------------------------------------------------------
-// Simple view
+// Section header
 // ---------------------------------------------------------------------------
 
-function SimpleView({ data }: { data: ProjectData }) {
+function SectionHeader({
+  title,
+  subtitle,
+}: {
+  title: string
+  subtitle?: string
+}) {
   return (
-    <div className="space-y-4">
-      {data.taskLists.map((taskList) => {
-        const progress = calculateProgress(taskList.tasks)
-        const notStarted = taskList.tasks.filter(
-          (t) => t.status === "not-started",
-        ).length
-        const inProgress = taskList.tasks.filter(
-          (t) => t.status === "in-progress",
-        ).length
-        const completed = taskList.tasks.filter(
-          (t) => t.status === "completed",
-        ).length
-
-        return (
-          <div key={taskList.id} className="card bg-base-100 shadow-md">
-            <div className="card-body p-4 gap-3">
-              {/* List header */}
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="font-bold text-lg">{taskList.name}</h2>
-                  {taskList.sprint && (
-                    <span className="badge badge-primary badge-sm">
-                      {taskList.sprint}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 text-sm text-base-content/60">
-                  <span className="text-success">{completed} done</span>
-                  <span className="text-warning">{inProgress} active</span>
-                  <span>{notStarted} pending</span>
-                  <span className="font-semibold text-base-content">
-                    {progress}%
-                  </span>
-                </div>
-              </div>
-
-              <progress
-                className="progress progress-primary w-full h-1.5"
-                value={progress}
-                max={100}
-              />
-
-              {/* Task grid */}
-              {taskList.tasks.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-1">
-                  {taskList.tasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="flex items-center justify-between gap-2 rounded-btn border border-base-300 px-3 py-2 bg-base-200"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {task.title}
-                        </p>
-                        {task.assignees.length > 0 && (
-                          <p className="text-xs text-base-content/50 truncate">
-                            {task.assignees.join(", ")}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <span
-                          className={`badge badge-xs ${priorityBadge[task.priority]}`}
-                        >
-                          {priorityLabel[task.priority]}
-                        </span>
-                        <span
-                          className={`badge badge-xs ${statusBadge[task.status]}`}
-                        >
-                          {task.status === "not-started"
-                            ? "Pending"
-                            : task.status === "in-progress"
-                              ? "Active"
-                              : "Done"}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )
-      })}
+    <div className="flex items-baseline gap-3 mb-3">
+      <h2 className="text-base font-semibold text-base-content">{title}</h2>
+      {subtitle && (
+        <span className="text-xs text-base-content/50">{subtitle}</span>
+      )}
+      <div className="flex-1 border-t border-base-300 ml-1" />
     </div>
   )
 }
 
 // ---------------------------------------------------------------------------
-// Detailed view (original)
+// Simple view
+// ---------------------------------------------------------------------------
+
+function SimpleView({ data }: { data: ProjectData }) {
+  const focus = data.taskLists.filter((tl) => tl.section === "focus")
+  const concurrent = data.taskLists.filter((tl) => tl.section === "concurrent")
+  const backlog = data.taskLists.filter((tl) => tl.section === "backlog")
+
+  return (
+    <div className="space-y-8">
+      {focus.length > 0 && (
+        <div>
+          <SectionHeader title="Currently working on" />
+          <div className="space-y-4">
+            {focus.map((taskList) => (
+              <SimpleTaskListCard key={taskList.id} taskList={taskList} />
+            ))}
+          </div>
+        </div>
+      )}
+      {concurrent.length > 0 && (
+        <div>
+          <SectionHeader
+            title="Concurrent Tasks"
+            subtitle="dynamic priority"
+          />
+          <div className="space-y-4">
+            {concurrent.map((taskList) => (
+              <SimpleTaskListCard key={taskList.id} taskList={taskList} />
+            ))}
+          </div>
+        </div>
+      )}
+      {backlog.length > 0 && (
+        <div>
+          <SectionHeader title="Backlog" />
+          <div className="space-y-4 opacity-80">
+            {backlog.map((taskList) => (
+              <SimpleTaskListCard key={taskList.id} taskList={taskList} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SimpleTaskListCard({ taskList }: { taskList: ProjectData["taskLists"][number] }) {
+  const progress = calculateProgress(taskList.tasks)
+  const notStarted = taskList.tasks.filter(
+    (t) => t.status === "not-started",
+  ).length
+  const inProgress = taskList.tasks.filter(
+    (t) => t.status === "in-progress",
+  ).length
+  const completed = taskList.tasks.filter(
+    (t) => t.status === "completed",
+  ).length
+
+  return (
+    <div className="card bg-base-100 shadow-md">
+      <div className="card-body p-4 gap-3">
+        {/* List header */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-bold text-lg">{taskList.name}</h3>
+            {taskList.sprint && (
+              <span className="badge badge-primary badge-sm">
+                {taskList.sprint}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3 text-sm text-base-content/60">
+            <span className="text-success">{completed} done</span>
+            <span className="text-warning">{inProgress} active</span>
+            <span>{notStarted} pending</span>
+            <span className="font-semibold text-base-content">
+              {progress}%
+            </span>
+          </div>
+        </div>
+
+        <progress
+          className="progress progress-primary w-full h-1.5"
+          value={progress}
+          max={100}
+        />
+
+        {/* Task grid */}
+        {taskList.tasks.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-1">
+            {taskList.tasks.map((task) => (
+              <div
+                key={task.id}
+                className="flex items-center justify-between gap-2 rounded-btn border border-base-300 px-3 py-2 bg-base-200"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {task.title}
+                  </p>
+                  {task.assignees.length > 0 && (
+                    <p className="text-xs text-base-content/50 truncate">
+                      {task.assignees.join(", ")}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <span
+                    className={`badge badge-xs ${priorityBadge[task.priority]}`}
+                  >
+                    {priorityLabel[task.priority]}
+                  </span>
+                  <span
+                    className={`badge badge-xs ${statusBadge[task.status]}`}
+                  >
+                    {task.status === "not-started"
+                      ? "Pending"
+                      : task.status === "in-progress"
+                        ? "Active"
+                        : "Done"}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Detailed view
 // ---------------------------------------------------------------------------
 
 function DetailedView({ data }: { data: ProjectData }) {
+  const focus = data.taskLists.filter((tl) => tl.section === "focus")
+  const concurrent = data.taskLists.filter((tl) => tl.section === "concurrent")
+  const backlog = data.taskLists.filter((tl) => tl.section === "backlog")
+
   return (
-    <div className="space-y-6">
-      {data.taskLists.map((taskList) => {
-        const progress = calculateProgress(taskList.tasks)
-        const storyPoints = calculateStoryPoints(taskList.tasks)
-        const listHasStoryPoints = taskList.tasks.some(
-          (t) => t.storyPoints != null,
-        )
-
-        return (
-          <div
-            key={taskList.id}
-            className="card bg-base-100 shadow-md overflow-hidden"
-          >
-            {/* Task List Header */}
-            <div className="bg-neutral text-neutral-content p-6">
-              <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
-                <div>
-                  <h2 className="text-2xl font-bold">{taskList.name}</h2>
-                  <p className="opacity-80 mt-1">{taskList.description}</p>
-                  {taskList.sprint && (
-                    <span className="badge badge-primary mt-2">
-                      {taskList.sprint}
-                    </span>
-                  )}
-                </div>
-                {taskList.startDate && taskList.endDate && (
-                  <div className="text-sm opacity-80">
-                    {new Date(taskList.startDate).toLocaleDateString()} –{" "}
-                    {new Date(taskList.endDate).toLocaleDateString()}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-between text-sm mb-1">
-                <span>Progress: {progress}%</span>
-                {listHasStoryPoints && (
-                  <span>
-                    Story Points: {storyPoints.completed}/{storyPoints.total}
-                  </span>
-                )}
-              </div>
-              <progress
-                className="progress progress-primary w-full"
-                value={progress}
-                max={100}
-              />
-            </div>
-
-            {/* Tasks */}
-            <div className="card-body gap-3">
-              {taskList.tasks.length === 0 && (
-                <p className="text-base-content/60 text-sm">
-                  No tasks in this list.
-                </p>
-              )}
-              {taskList.tasks.map((task) => (
-                <div
-                  key={task.id}
-                  className="flex flex-wrap items-start justify-between gap-3 p-4 rounded-box border border-base-300 hover:bg-base-200 transition-colors"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center flex-wrap gap-2 mb-2">
-                      <h3 className="font-semibold">{task.title}</h3>
-                      <span
-                        className={`badge badge-sm ${priorityBadge[task.priority]}`}
-                      >
-                        {task.priority}
-                      </span>
-                    </div>
-                    <p className="text-base-content/70 text-sm mb-2">
-                      {task.description}
-                    </p>
-                    <div className="flex flex-wrap gap-2 items-center text-sm text-base-content/60">
-                      <span className="font-medium">
-                        {task.assignees.join(", ")}
-                      </span>
-                      {task.storyPoints != null && (
-                        <>
-                          <span>•</span>
-                          <span>{task.storyPoints} pts</span>
-                        </>
-                      )}
-                      {task.dueDate && (
-                        <>
-                          <span>•</span>
-                          <span>
-                            Due: {new Date(task.dueDate).toLocaleDateString()}
-                          </span>
-                        </>
-                      )}
-                      {task.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="badge badge-sm badge-outline"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <span className={`badge ${statusBadge[task.status]}`}>
-                    {task.status.replace("-", " ")}
-                  </span>
-                </div>
-              ))}
-            </div>
+    <div className="space-y-10">
+      {focus.length > 0 && (
+        <div>
+          <SectionHeader title="Currently working on" />
+          <div className="space-y-6">
+            {focus.map((taskList) => (
+              <DetailedTaskListCard key={taskList.id} taskList={taskList} />
+            ))}
           </div>
-        )
-      })}
+        </div>
+      )}
+      {concurrent.length > 0 && (
+        <div>
+          <SectionHeader
+            title="Concurrent Tasks"
+            subtitle="dynamic priority"
+          />
+          <div className="space-y-6">
+            {concurrent.map((taskList) => (
+              <DetailedTaskListCard key={taskList.id} taskList={taskList} />
+            ))}
+          </div>
+        </div>
+      )}
+      {backlog.length > 0 && (
+        <div>
+          <SectionHeader title="Backlog" />
+          <div className="space-y-6 opacity-80">
+            {backlog.map((taskList) => (
+              <DetailedTaskListCard key={taskList.id} taskList={taskList} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Team Section */}
       {data.team.length > 0 && (
@@ -406,6 +395,110 @@ function DetailedView({ data }: { data: ProjectData }) {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function DetailedTaskListCard({ taskList }: { taskList: ProjectData["taskLists"][number] }) {
+  const progress = calculateProgress(taskList.tasks)
+  const storyPoints = calculateStoryPoints(taskList.tasks)
+  const listHasStoryPoints = taskList.tasks.some((t) => t.storyPoints != null)
+
+  return (
+    <div className="card bg-base-100 shadow-md overflow-hidden">
+      {/* Task List Header */}
+      <div className="bg-neutral text-neutral-content p-6">
+        <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
+          <div>
+            <h3 className="text-2xl font-bold">{taskList.name}</h3>
+            <p className="opacity-80 mt-1">{taskList.description}</p>
+            {taskList.sprint && (
+              <span className="badge badge-primary mt-2">
+                {taskList.sprint}
+              </span>
+            )}
+          </div>
+          {taskList.startDate && taskList.endDate && (
+            <div className="text-sm opacity-80">
+              {new Date(taskList.startDate).toLocaleDateString()} –{" "}
+              {new Date(taskList.endDate).toLocaleDateString()}
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-between text-sm mb-1">
+          <span>Progress: {progress}%</span>
+          {listHasStoryPoints && (
+            <span>
+              Story Points: {storyPoints.completed}/{storyPoints.total}
+            </span>
+          )}
+        </div>
+        <progress
+          className="progress progress-primary w-full"
+          value={progress}
+          max={100}
+        />
+      </div>
+
+      {/* Tasks */}
+      <div className="card-body gap-3">
+        {taskList.tasks.length === 0 && (
+          <p className="text-base-content/60 text-sm">
+            No tasks in this list.
+          </p>
+        )}
+        {taskList.tasks.map((task) => (
+          <div
+            key={task.id}
+            className="flex flex-wrap items-start justify-between gap-3 p-4 rounded-box border border-base-300 hover:bg-base-200 transition-colors"
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center flex-wrap gap-2 mb-2">
+                <h3 className="font-semibold">{task.title}</h3>
+                <span
+                  className={`badge badge-sm ${priorityBadge[task.priority]}`}
+                >
+                  {task.priority}
+                </span>
+              </div>
+              <p className="text-base-content/70 text-sm mb-2">
+                {task.description}
+              </p>
+              <div className="flex flex-wrap gap-2 items-center text-sm text-base-content/60">
+                <span className="font-medium">
+                  {task.assignees.join(", ")}
+                </span>
+                {task.storyPoints != null && (
+                  <>
+                    <span>•</span>
+                    <span>{task.storyPoints} pts</span>
+                  </>
+                )}
+                {task.dueDate && (
+                  <>
+                    <span>•</span>
+                    <span>
+                      Due: {new Date(task.dueDate).toLocaleDateString()}
+                    </span>
+                  </>
+                )}
+                {task.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="badge badge-sm badge-outline"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <span className={`badge ${statusBadge[task.status]}`}>
+              {task.status.replace("-", " ")}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
