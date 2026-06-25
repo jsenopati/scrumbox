@@ -10,6 +10,7 @@ export interface Task {
   priority: "backlog" | "low" | "medium" | "high" | "asap"
   dueDate?: string
   tags: string[]
+  sortOrder: number
   createdAt: string
   updatedAt: string
 }
@@ -23,6 +24,8 @@ export interface TaskList {
   startDate?: string
   endDate?: string
   archivedAt?: string
+  sortOrder: number
+  section: "focus" | "upnext" | "concurrent" | "backlog"
 }
 
 export interface ProjectData {
@@ -45,6 +48,7 @@ interface TaskRow {
   priority: Task["priority"]
   due_date: string | null
   tags: string[] | null
+  sort_order: number
   created_at: string
   updated_at: string
 }
@@ -57,6 +61,8 @@ interface TaskListRow {
   start_date: string | null
   end_date: string | null
   archived_at: string | null
+  sort_order: number
+  section: TaskList["section"]
   created_at: string
 }
 
@@ -71,6 +77,7 @@ function mapTaskRow(row: TaskRow): Task {
     priority: row.priority,
     dueDate: row.due_date ?? undefined,
     tags: row.tags ?? [],
+    sortOrder: row.sort_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -87,6 +94,8 @@ function mapTaskListRow(row: TaskListRow, tasks: Task[]): TaskList {
     startDate: row.start_date ?? undefined,
     endDate: row.end_date ?? undefined,
     archivedAt: row.archived_at ?? undefined,
+    sortOrder: row.sort_order,
+    section: row.section,
     tasks,
   }
 }
@@ -96,8 +105,13 @@ export async function getProjectData(): Promise<ProjectData> {
     supabase
       .from("task_lists")
       .select("*")
+      .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true }),
-    supabase.from("tasks").select("*").order("created_at", { ascending: true }),
+    supabase
+      .from("tasks")
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true }),
   ])
 
   if (listsResult.error) throw new Error(listsResult.error.message)
@@ -148,6 +162,16 @@ export async function getProjectData(): Promise<ProjectData> {
 export async function addTaskList(
   taskList: Omit<TaskList, "id" | "tasks" | "archivedAt">,
 ): Promise<TaskList> {
+  // Place new list at the end of its section
+  const { data: maxRow } = await supabase
+    .from("task_lists")
+    .select("sort_order")
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .single()
+  const nextOrder =
+    ((maxRow as { sort_order: number } | null)?.sort_order ?? 0) + 10
+
   const { data, error } = await supabase
     .from("task_lists")
     .insert({
@@ -156,6 +180,8 @@ export async function addTaskList(
       sprint: taskList.sprint ?? null,
       start_date: taskList.startDate ?? null,
       end_date: taskList.endDate ?? null,
+      sort_order: nextOrder,
+      section: taskList.section,
     })
     .select("*")
     .single()
@@ -192,6 +218,7 @@ export async function updateTaskList(
   if (updates.startDate !== undefined)
     patch.start_date = updates.startDate ?? null
   if (updates.endDate !== undefined) patch.end_date = updates.endDate ?? null
+  if (updates.section !== undefined) patch.section = updates.section
 
   const { error } = await supabase.from("task_lists").update(patch).eq("id", id)
 
@@ -207,8 +234,19 @@ export async function deleteTaskList(id: string): Promise<void> {
 
 export async function addTask(
   taskListId: string,
-  task: Omit<Task, "id" | "createdAt" | "updatedAt">,
+  task: Omit<Task, "id" | "sortOrder" | "createdAt" | "updatedAt">,
 ): Promise<Task> {
+  // Place new task at the end of this list
+  const { data: maxRow } = await supabase
+    .from("tasks")
+    .select("sort_order")
+    .eq("task_list_id", taskListId)
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .single()
+  const nextOrder =
+    ((maxRow as { sort_order: number } | null)?.sort_order ?? 0) + 10
+
   const { data, error } = await supabase
     .from("tasks")
     .insert({
@@ -221,6 +259,7 @@ export async function addTask(
       priority: task.priority,
       due_date: task.dueDate ?? null,
       tags: task.tags,
+      sort_order: nextOrder,
     })
     .select("*")
     .single()
@@ -300,6 +339,78 @@ export async function addTeamMember(name: string): Promise<TeamMember> {
 export async function deleteTeamMember(id: string): Promise<void> {
   const { error } = await supabase.from("team_members").delete().eq("id", id)
   if (error) throw new Error(error.message)
+}
+
+// --- reorder task lists -----------------------------------------------------
+
+export async function reorderTaskList(
+  id: string,
+  direction: "up" | "down",
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("task_lists")
+    .select("id, sort_order")
+    .is("archived_at", null)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true })
+  if (error) throw new Error(error.message)
+
+  const rows = data as { id: string; sort_order: number }[]
+  const idx = rows.findIndex((r) => r.id === id)
+  if (idx === -1) return
+  const swapIdx = direction === "up" ? idx - 1 : idx + 1
+  if (swapIdx < 0 || swapIdx >= rows.length) return
+
+  const a = rows[idx]
+  const b = rows[swapIdx]
+
+  // Swap sort_order values
+  const { error: e1 } = await supabase
+    .from("task_lists")
+    .update({ sort_order: b.sort_order })
+    .eq("id", a.id)
+  if (e1) throw new Error(e1.message)
+  const { error: e2 } = await supabase
+    .from("task_lists")
+    .update({ sort_order: a.sort_order })
+    .eq("id", b.id)
+  if (e2) throw new Error(e2.message)
+}
+
+// --- reorder tasks ----------------------------------------------------------
+
+export async function reorderTask(
+  taskListId: string,
+  taskId: string,
+  direction: "up" | "down",
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("id, sort_order")
+    .eq("task_list_id", taskListId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true })
+  if (error) throw new Error(error.message)
+
+  const rows = data as { id: string; sort_order: number }[]
+  const idx = rows.findIndex((r) => r.id === taskId)
+  if (idx === -1) return
+  const swapIdx = direction === "up" ? idx - 1 : idx + 1
+  if (swapIdx < 0 || swapIdx >= rows.length) return
+
+  const a = rows[idx]
+  const b = rows[swapIdx]
+
+  const { error: e1 } = await supabase
+    .from("tasks")
+    .update({ sort_order: b.sort_order })
+    .eq("id", a.id)
+  if (e1) throw new Error(e1.message)
+  const { error: e2 } = await supabase
+    .from("tasks")
+    .update({ sort_order: a.sort_order })
+    .eq("id", b.id)
+  if (e2) throw new Error(e2.message)
 }
 
 // --- computed metrics -------------------------------------------------------
