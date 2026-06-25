@@ -185,6 +185,7 @@ function SectionHeader({
 
 function SimpleView({ data }: { data: ProjectData }) {
   const focus = data.taskLists.filter((tl) => tl.section === "focus")
+  const upnext = data.taskLists.filter((tl) => tl.section === "upnext")
   const concurrent = data.taskLists.filter((tl) => tl.section === "concurrent")
   const backlog = data.taskLists.filter((tl) => tl.section === "backlog")
 
@@ -200,12 +201,19 @@ function SimpleView({ data }: { data: ProjectData }) {
           </div>
         </div>
       )}
+      {upnext.length > 0 && (
+        <div>
+          <SectionHeader title="Up next" />
+          <div className="space-y-4">
+            {upnext.map((taskList) => (
+              <SimpleTaskListCard key={taskList.id} taskList={taskList} />
+            ))}
+          </div>
+        </div>
+      )}
       {concurrent.length > 0 && (
         <div>
-          <SectionHeader
-            title="Concurrent Tasks"
-            subtitle="dynamic priority"
-          />
+          <SectionHeader title="Concurrent Tasks" subtitle="dynamic priority" />
           <div className="space-y-4">
             {concurrent.map((taskList) => (
               <SimpleTaskListCard key={taskList.id} taskList={taskList} />
@@ -227,7 +235,11 @@ function SimpleView({ data }: { data: ProjectData }) {
   )
 }
 
-function SimpleTaskListCard({ taskList }: { taskList: ProjectData["taskLists"][number] }) {
+function SimpleTaskListCard({
+  taskList,
+}: {
+  taskList: ProjectData["taskLists"][number]
+}) {
   const progress = calculateProgress(taskList.tasks)
   const notStarted = taskList.tasks.filter(
     (t) => t.status === "not-started",
@@ -256,9 +268,7 @@ function SimpleTaskListCard({ taskList }: { taskList: ProjectData["taskLists"][n
             <span className="text-success">{completed} done</span>
             <span className="text-warning">{inProgress} active</span>
             <span>{notStarted} pending</span>
-            <span className="font-semibold text-base-content">
-              {progress}%
-            </span>
+            <span className="font-semibold text-base-content">{progress}%</span>
           </div>
         </div>
 
@@ -277,9 +287,7 @@ function SimpleTaskListCard({ taskList }: { taskList: ProjectData["taskLists"][n
                 className="flex items-center justify-between gap-2 rounded-btn border border-base-300 px-3 py-2 bg-base-200"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">
-                    {task.title}
-                  </p>
+                  <p className="text-sm font-medium truncate">{task.title}</p>
                   {task.assignees.length > 0 && (
                     <p className="text-xs text-base-content/50 truncate">
                       {task.assignees.join(", ")}
@@ -317,6 +325,7 @@ function SimpleTaskListCard({ taskList }: { taskList: ProjectData["taskLists"][n
 
 function DetailedView({ data }: { data: ProjectData }) {
   const focus = data.taskLists.filter((tl) => tl.section === "focus")
+  const upnext = data.taskLists.filter((tl) => tl.section === "upnext")
   const concurrent = data.taskLists.filter((tl) => tl.section === "concurrent")
   const backlog = data.taskLists.filter((tl) => tl.section === "backlog")
 
@@ -332,12 +341,19 @@ function DetailedView({ data }: { data: ProjectData }) {
           </div>
         </div>
       )}
+      {upnext.length > 0 && (
+        <div>
+          <SectionHeader title="Up next" />
+          <div className="space-y-6">
+            {upnext.map((taskList) => (
+              <DetailedTaskListCard key={taskList.id} taskList={taskList} />
+            ))}
+          </div>
+        </div>
+      )}
       {concurrent.length > 0 && (
         <div>
-          <SectionHeader
-            title="Concurrent Tasks"
-            subtitle="dynamic priority"
-          />
+          <SectionHeader title="Concurrent Tasks" subtitle="dynamic priority" />
           <div className="space-y-6">
             {concurrent.map((taskList) => (
               <DetailedTaskListCard key={taskList.id} taskList={taskList} />

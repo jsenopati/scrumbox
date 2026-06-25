@@ -57,6 +57,7 @@ function TaskListFields({ taskList }: { taskList?: TaskList }) {
           className="select w-full"
         >
           <option value="focus">Currently working on</option>
+          <option value="upnext">Up next</option>
           <option value="concurrent">Concurrent Tasks</option>
           <option value="backlog">Backlog</option>
         </select>
@@ -320,9 +321,11 @@ export default async function ManagePage() {
                       <span className="badge badge-outline badge-sm">
                         {taskList.section === "focus"
                           ? "Currently working on"
-                          : taskList.section === "concurrent"
-                            ? "Concurrent"
-                            : "Backlog"}
+                          : taskList.section === "upnext"
+                            ? "Up next"
+                            : taskList.section === "concurrent"
+                              ? "Concurrent"
+                              : "Backlog"}
                       </span>
                     </div>
                   </div>

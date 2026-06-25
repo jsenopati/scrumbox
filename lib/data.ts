@@ -25,7 +25,7 @@ export interface TaskList {
   endDate?: string
   archivedAt?: string
   sortOrder: number
-  section: "focus" | "concurrent" | "backlog"
+  section: "focus" | "upnext" | "concurrent" | "backlog"
 }
 
 export interface ProjectData {

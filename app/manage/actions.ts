@@ -58,9 +58,12 @@ function parsePriority(formData: FormData): Task["priority"] {
   return "medium"
 }
 
-function parseSection(formData: FormData): "focus" | "concurrent" | "backlog" {
+function parseSection(
+  formData: FormData,
+): "focus" | "upnext" | "concurrent" | "backlog" {
   const value = str(formData, "section")
-  if (value === "concurrent" || value === "backlog") return value
+  if (value === "upnext" || value === "concurrent" || value === "backlog")
+    return value
   return "focus"
 }
 
