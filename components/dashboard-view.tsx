@@ -436,8 +436,8 @@ function DetailedTaskListCard({ taskList }: { taskList: ProjectData["taskLists"]
           </div>
           {taskList.startDate && taskList.endDate && (
             <div className="text-sm opacity-80">
-              {new Date(taskList.startDate).toLocaleDateString()} –{" "}
-              {new Date(taskList.endDate).toLocaleDateString()}
+              {new Date(taskList.startDate + "T00:00:00").toLocaleDateString()}{" "}
+              – {new Date(taskList.endDate + "T00:00:00").toLocaleDateString()}
             </div>
           )}
         </div>
@@ -460,9 +460,7 @@ function DetailedTaskListCard({ taskList }: { taskList: ProjectData["taskLists"]
       {/* Tasks */}
       <div className="card-body gap-3">
         {taskList.tasks.length === 0 && (
-          <p className="text-base-content/60 text-sm">
-            No tasks in this list.
-          </p>
+          <p className="text-base-content/60 text-sm">No tasks in this list.</p>
         )}
         {taskList.tasks.map((task) => (
           <div
@@ -482,9 +480,7 @@ function DetailedTaskListCard({ taskList }: { taskList: ProjectData["taskLists"]
                 {task.description}
               </p>
               <div className="flex flex-wrap gap-2 items-center text-sm text-base-content/60">
-                <span className="font-medium">
-                  {task.assignees.join(", ")}
-                </span>
+                <span className="font-medium">{task.assignees.join(", ")}</span>
                 {task.storyPoints != null && (
                   <>
                     <span>•</span>
@@ -495,15 +491,15 @@ function DetailedTaskListCard({ taskList }: { taskList: ProjectData["taskLists"]
                   <>
                     <span>•</span>
                     <span>
-                      Due: {new Date(task.dueDate).toLocaleDateString()}
+                      Due:{" "}
+                      {new Date(
+                        task.dueDate + "T00:00:00",
+                      ).toLocaleDateString()}
                     </span>
                   </>
                 )}
                 {task.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="badge badge-sm badge-outline"
-                  >
+                  <span key={tag} className="badge badge-sm badge-outline">
                     {tag}
                   </span>
                 ))}
