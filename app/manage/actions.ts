@@ -73,6 +73,13 @@ function parseStoryPoints(formData: FormData): number | null {
   return Number.isFinite(points) ? points : 0
 }
 
+function parseSortOrder(formData: FormData): number | undefined {
+  const value = str(formData, "sortOrder")
+  if (!value) return undefined
+  const n = Number.parseInt(value, 10)
+  return Number.isFinite(n) && n >= 0 ? n : undefined
+}
+
 // --- task list actions ------------------------------------------------------
 
 export async function createTaskListAction(formData: FormData) {
@@ -194,6 +201,7 @@ export async function updateTaskAction(formData: FormData) {
     priority: parsePriority(formData),
     dueDate: optionalStr(formData, "dueDate"),
     tags: parseTags(formData),
+    sortOrder: parseSortOrder(formData),
   })
 
   revalidatePath("/manage")

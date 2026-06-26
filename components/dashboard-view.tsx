@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { IoArrowForward, IoArrowDown, IoChevronForward } from "react-icons/io5"
 import { calculateProgress, calculateStoryPoints } from "@/lib/metrics"
 import type { ProjectData } from "@/lib/data"
 
@@ -109,13 +110,9 @@ export function DashboardView({
             className="flex items-center gap-2 text-sm font-medium text-base-content/50 hover:text-base-content transition-colors mb-3"
             onClick={() => setArchiveOpen((o) => !o)}
           >
-            <span
-              className={`inline-block transition-transform ${
-                archiveOpen ? "rotate-90" : ""
-              }`}
-            >
-              ▶
-            </span>
+            <IoChevronForward
+              className={`transition-transform ${archiveOpen ? "rotate-90" : ""}`}
+            />
             Archived ({data.archivedTaskLists.length})
           </button>
           {archiveOpen && (
@@ -133,7 +130,9 @@ export function DashboardView({
                               {taskList.sprint}
                             </span>
                           )}
-                          <span className="badge badge-ghost badge-sm">Archived</span>
+                          <span className="badge badge-ghost badge-sm">
+                            Archived
+                          </span>
                         </div>
                         <span className="text-sm text-base-content/50">
                           {taskList.tasks.length} task
@@ -235,6 +234,32 @@ function SimpleView({ data }: { data: ProjectData }) {
   )
 }
 
+// ---------------------------------------------------------------------------
+// Flow helpers
+// ---------------------------------------------------------------------------
+
+type FlowTask = ProjectData["taskLists"][number]["tasks"][number]
+
+function groupByStep(tasks: FlowTask[]): FlowTask[][] {
+  const map = new Map<number, FlowTask[]>()
+  for (const task of tasks) {
+    const group = map.get(task.sortOrder) ?? []
+    group.push(task)
+    map.set(task.sortOrder, group)
+  }
+  return Array.from(map.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([, group]) => group)
+}
+
+function FlowArrow() {
+  return (
+    <div className="flex items-center self-center shrink-0 px-2 text-base-content/30">
+      <IoArrowForward size={18} />
+    </div>
+  )
+}
+
 function SimpleTaskListCard({
   taskList,
 }: {
@@ -278,40 +303,61 @@ function SimpleTaskListCard({
           max={100}
         />
 
-        {/* Task grid */}
+        {/* Task flow */}
         {taskList.tasks.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-1">
-            {taskList.tasks.map((task) => (
-              <div
-                key={task.id}
-                className="flex items-center justify-between gap-2 rounded-btn border border-base-300 px-3 py-2 bg-base-200"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{task.title}</p>
-                  {task.assignees.length > 0 && (
-                    <p className="text-xs text-base-content/50 truncate">
-                      {task.assignees.join(", ")}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <span
-                    className={`badge badge-xs ${priorityBadge[task.priority]}`}
+          <div className="overflow-x-auto pb-2 mt-1">
+            <div className="flex items-center gap-0 w-max">
+              {groupByStep(taskList.tasks).flatMap((step, stepIdx, steps) => {
+                const nodes = [
+                  <div
+                    key={`step-${stepIdx}`}
+                    className="flex flex-col gap-1.5"
                   >
-                    {priorityLabel[task.priority]}
-                  </span>
-                  <span
-                    className={`badge badge-xs ${statusBadge[task.status]}`}
-                  >
-                    {task.status === "not-started"
-                      ? "Pending"
-                      : task.status === "in-progress"
-                        ? "Active"
-                        : "Done"}
-                  </span>
-                </div>
-              </div>
-            ))}
+                    {step.map((task) => (
+                      <div
+                        key={task.id}
+                        className={`flex flex-col gap-1 rounded-btn border px-3 py-2 w-48 ${
+                          task.status === "completed"
+                            ? "border-success/30 bg-success/5 opacity-60"
+                            : task.status === "in-progress"
+                              ? "border-warning/40 bg-warning/5"
+                              : "border-base-300 bg-base-200"
+                        }`}
+                      >
+                        <p className="text-sm font-medium leading-snug line-clamp-2">
+                          {task.title}
+                        </p>
+                        {task.assignees.length > 0 && (
+                          <p className="text-xs text-base-content/50 truncate">
+                            {task.assignees.join(", ")}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                          <span
+                            className={`badge badge-xs ${priorityBadge[task.priority]}`}
+                          >
+                            {priorityLabel[task.priority]}
+                          </span>
+                          <span
+                            className={`badge badge-xs ${statusBadge[task.status]}`}
+                          >
+                            {task.status === "not-started"
+                              ? "Pending"
+                              : task.status === "in-progress"
+                                ? "Active"
+                                : "Done"}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>,
+                ]
+                if (stepIdx < steps.length - 1) {
+                  nodes.push(<FlowArrow key={`arrow-${stepIdx}`} />)
+                }
+                return nodes
+              })}
+            </div>
           </div>
         )}
       </div>
@@ -415,7 +461,11 @@ function DetailedView({ data }: { data: ProjectData }) {
   )
 }
 
-function DetailedTaskListCard({ taskList }: { taskList: ProjectData["taskLists"][number] }) {
+function DetailedTaskListCard({
+  taskList,
+}: {
+  taskList: ProjectData["taskLists"][number]
+}) {
   const progress = calculateProgress(taskList.tasks)
   const storyPoints = calculateStoryPoints(taskList.tasks)
   const listHasStoryPoints = taskList.tasks.some((t) => t.storyPoints != null)
@@ -457,57 +507,84 @@ function DetailedTaskListCard({ taskList }: { taskList: ProjectData["taskLists"]
         />
       </div>
 
-      {/* Tasks */}
-      <div className="card-body gap-3">
+      {/* Task flow — vertical, full-width */}
+      <div className="card-body gap-0 pt-5">
         {taskList.tasks.length === 0 && (
           <p className="text-base-content/60 text-sm">No tasks in this list.</p>
         )}
-        {taskList.tasks.map((task) => (
-          <div
-            key={task.id}
-            className="flex flex-wrap items-start justify-between gap-3 p-4 rounded-box border border-base-300 hover:bg-base-200 transition-colors"
-          >
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center flex-wrap gap-2 mb-2">
-                <h3 className="font-semibold">{task.title}</h3>
-                <span
-                  className={`badge badge-sm ${priorityBadge[task.priority]}`}
+        {groupByStep(taskList.tasks).map((step, stepIdx, steps) => (
+          <div key={stepIdx}>
+            {/* Concurrent tasks in this step sit side-by-side */}
+            <div className="flex flex-wrap gap-3">
+              {step.map((task) => (
+                <div
+                  key={task.id}
+                  className={`flex-1 min-w-64 rounded-box border p-4 transition-colors ${
+                    task.status === "completed"
+                      ? "border-success/30 bg-success/5 opacity-60"
+                      : task.status === "in-progress"
+                        ? "border-warning/40 bg-warning/5"
+                        : "border-base-300"
+                  }`}
                 >
-                  {task.priority}
-                </span>
-              </div>
-              <p className="text-base-content/70 text-sm mb-2">
-                {task.description}
-              </p>
-              <div className="flex flex-wrap gap-2 items-center text-sm text-base-content/60">
-                <span className="font-medium">{task.assignees.join(", ")}</span>
-                {task.storyPoints != null && (
-                  <>
-                    <span>•</span>
-                    <span>{task.storyPoints} pts</span>
-                  </>
-                )}
-                {task.dueDate && (
-                  <>
-                    <span>•</span>
-                    <span>
-                      Due:{" "}
-                      {new Date(
-                        task.dueDate + "T00:00:00",
-                      ).toLocaleDateString()}
+                  {/* Title + priority + status */}
+                  <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+                    <div className="flex items-center flex-wrap gap-2">
+                      <h3 className="font-semibold text-base">{task.title}</h3>
+                      <span
+                        className={`badge badge-sm ${priorityBadge[task.priority]}`}
+                      >
+                        {task.priority}
+                      </span>
+                    </div>
+                    <span
+                      className={`badge shrink-0 ${statusBadge[task.status]}`}
+                    >
+                      {task.status.replace("-", " ")}
                     </span>
-                  </>
-                )}
-                {task.tags.map((tag) => (
-                  <span key={tag} className="badge badge-sm badge-outline">
-                    {tag}
-                  </span>
-                ))}
-              </div>
+                  </div>
+
+                  {/* Full description — no truncation */}
+                  {task.description && (
+                    <p className="text-base-content/70 text-sm mb-3">
+                      {task.description}
+                    </p>
+                  )}
+
+                  {/* Meta row */}
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 items-center text-sm text-base-content/60">
+                    {task.assignees.length > 0 && (
+                      <span className="font-medium">
+                        {task.assignees.join(", ")}
+                      </span>
+                    )}
+                    {task.storyPoints != null && (
+                      <span>{task.storyPoints} pts</span>
+                    )}
+                    {task.dueDate && (
+                      <span>
+                        Due:{" "}
+                        {new Date(
+                          task.dueDate + "T00:00:00",
+                        ).toLocaleDateString()}
+                      </span>
+                    )}
+                    {task.tags.map((tag) => (
+                      <span key={tag} className="badge badge-sm badge-outline">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
-            <span className={`badge ${statusBadge[task.status]}`}>
-              {task.status.replace("-", " ")}
-            </span>
+
+            {/* Down-arrow between steps */}
+            {stepIdx < steps.length - 1 && (
+              <div className="flex justify-center py-1 text-base-content/30">
+                <IoArrowDown size={16} />
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -285,6 +285,7 @@ export async function updateTask(
   if (updates.priority !== undefined) patch.priority = updates.priority
   if (updates.dueDate !== undefined) patch.due_date = updates.dueDate ?? null
   if (updates.tags !== undefined) patch.tags = updates.tags
+  if (updates.sortOrder !== undefined) patch.sort_order = updates.sortOrder
 
   const { error } = await supabase
     .from("tasks")
