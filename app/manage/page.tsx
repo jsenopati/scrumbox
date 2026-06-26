@@ -221,6 +221,23 @@ function TaskFields({ task, team }: { task?: Task; team: string[] }) {
           className="input w-full"
         />
       </fieldset>
+      {task && (
+        <fieldset className="fieldset md:col-span-2">
+          <legend className="fieldset-legend">Step</legend>
+          <input
+            key={task.sortOrder}
+            name="sortOrder"
+            type="number"
+            min="0"
+            defaultValue={task.sortOrder}
+            className="input w-32"
+          />
+          <p className="label text-xs text-base-content/50 mt-1">
+            Tasks with the same step number are shown as concurrent (no arrow
+            between them) in the dashboard flow.
+          </p>
+        </fieldset>
+      )}
     </div>
   )
 }
