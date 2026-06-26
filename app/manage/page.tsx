@@ -9,6 +9,16 @@ import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Link from "next/link"
 import {
+  IoArrowUp,
+  IoArrowDown,
+  IoArchiveOutline,
+  IoArrowUndoOutline,
+  IoTrashOutline,
+  IoPersonRemoveOutline,
+  IoAdd,
+  IoGridOutline,
+} from "react-icons/io5"
+import {
   createTaskListAction,
   updateTaskListAction,
   deleteTaskListAction,
@@ -232,7 +242,8 @@ export default async function ManagePage() {
           </div>
           <div className="navbar-end gap-2">
             <ThemeToggle />
-            <Link href="/dashboard" className="btn btn-ghost btn-sm">
+            <Link href="/dashboard" className="btn btn-ghost btn-sm gap-1">
+              <IoGridOutline />
               View Dashboard
             </Link>
             <LogoutButton />
@@ -261,6 +272,7 @@ export default async function ManagePage() {
                     type="submit"
                     className="btn btn-error btn-xs btn-soft"
                   >
+                    <IoPersonRemoveOutline />
                     Remove
                   </button>
                 </form>
@@ -283,7 +295,10 @@ export default async function ManagePage() {
         {/* Add task list */}
         <div className="collapse collapse-arrow bg-base-100 shadow-sm mb-6">
           <input type="checkbox" />
-          <div className="collapse-title font-semibold">+ New task list</div>
+          <div className="collapse-title font-semibold flex items-center gap-2">
+            <IoAdd />
+            New task list
+          </div>
           <div className="collapse-content">
             <form action={createTaskListAction} className="space-y-4">
               <TaskListFields />
@@ -337,7 +352,7 @@ export default async function ManagePage() {
                         className="btn btn-ghost btn-sm btn-square"
                         title="Move up"
                       >
-                        ↑
+                        <IoArrowUp />
                       </button>
                     </form>
                     <form action={moveTaskListDownAction}>
@@ -347,19 +362,21 @@ export default async function ManagePage() {
                         className="btn btn-ghost btn-sm btn-square"
                         title="Move down"
                       >
-                        ↓
+                        <IoArrowDown />
                       </button>
                     </form>
                     <form action={archiveTaskListAction}>
                       <input type="hidden" name="id" value={taskList.id} />
                       <button type="submit" className="btn btn-warning btn-sm">
-                        Archive list
+                        <IoArchiveOutline />
+                        Archive
                       </button>
                     </form>
                     <form action={deleteTaskListAction}>
                       <input type="hidden" name="id" value={taskList.id} />
                       <button type="submit" className="btn btn-error btn-sm">
-                        Delete list
+                        <IoTrashOutline />
+                        Delete
                       </button>
                     </form>
                   </div>
@@ -427,7 +444,7 @@ export default async function ManagePage() {
                               className="btn btn-ghost btn-xs btn-square"
                               title="Move up"
                             >
-                              ↑
+                              <IoArrowUp />
                             </button>
                           </form>
                           <form action={moveTaskDownAction}>
@@ -446,7 +463,7 @@ export default async function ManagePage() {
                               className="btn btn-ghost btn-xs btn-square"
                               title="Move down"
                             >
-                              ↓
+                              <IoArrowDown />
                             </button>
                           </form>
                           <form action={deleteTaskAction}>
@@ -464,6 +481,7 @@ export default async function ManagePage() {
                               type="submit"
                               className="btn btn-error btn-sm btn-soft"
                             >
+                              <IoTrashOutline />
                               Delete
                             </button>
                           </form>
@@ -501,8 +519,9 @@ export default async function ManagePage() {
                 {/* Add task */}
                 <div className="collapse collapse-arrow bg-base-200 mt-2">
                   <input type="checkbox" />
-                  <div className="collapse-title text-sm font-medium text-success">
-                    + Add task to this list
+                  <div className="collapse-title text-sm font-medium text-success flex items-center gap-2">
+                    <IoAdd />
+                    Add task to this list
                   </div>
                   <div className="collapse-content">
                     <form action={createTaskAction} className="space-y-4">
@@ -562,6 +581,7 @@ export default async function ManagePage() {
                       <form action={unarchiveTaskListAction}>
                         <input type="hidden" name="id" value={taskList.id} />
                         <SubmitButton className="btn btn-ghost btn-sm">
+                          <IoArrowUndoOutline />
                           Unarchive
                         </SubmitButton>
                       </form>
@@ -571,6 +591,7 @@ export default async function ManagePage() {
                           type="submit"
                           className="btn btn-error btn-sm btn-soft"
                         >
+                          <IoTrashOutline />
                           Delete
                         </button>
                       </form>

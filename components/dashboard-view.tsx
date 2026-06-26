@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { IoArrowForward, IoArrowDown, IoChevronForward } from "react-icons/io5"
 import { calculateProgress, calculateStoryPoints } from "@/lib/metrics"
 import type { ProjectData } from "@/lib/data"
 
@@ -109,13 +110,9 @@ export function DashboardView({
             className="flex items-center gap-2 text-sm font-medium text-base-content/50 hover:text-base-content transition-colors mb-3"
             onClick={() => setArchiveOpen((o) => !o)}
           >
-            <span
-              className={`inline-block transition-transform ${
-                archiveOpen ? "rotate-90" : ""
-              }`}
-            >
-              ▶
-            </span>
+            <IoChevronForward
+              className={`transition-transform ${archiveOpen ? "rotate-90" : ""}`}
+            />
             Archived ({data.archivedTaskLists.length})
           </button>
           {archiveOpen && (
@@ -133,7 +130,9 @@ export function DashboardView({
                               {taskList.sprint}
                             </span>
                           )}
-                          <span className="badge badge-ghost badge-sm">Archived</span>
+                          <span className="badge badge-ghost badge-sm">
+                            Archived
+                          </span>
                         </div>
                         <span className="text-sm text-base-content/50">
                           {taskList.tasks.length} task
@@ -255,11 +254,8 @@ function groupByStep(tasks: FlowTask[]): FlowTask[][] {
 
 function FlowArrow() {
   return (
-    <div className="flex items-center self-center shrink-0 px-2 text-base-content/25">
-      <div className="w-5 h-px bg-current" />
-      <svg width="6" height="9" viewBox="0 0 6 9" fill="currentColor">
-        <path d="M0 0 L6 4.5 L0 9 Z" />
-      </svg>
+    <div className="flex items-center self-center shrink-0 px-2 text-base-content/30">
+      <IoArrowForward size={18} />
     </div>
   )
 }
@@ -313,7 +309,10 @@ function SimpleTaskListCard({
             <div className="flex items-center gap-0 w-max">
               {groupByStep(taskList.tasks).flatMap((step, stepIdx, steps) => {
                 const nodes = [
-                  <div key={`step-${stepIdx}`} className="flex flex-col gap-1.5">
+                  <div
+                    key={`step-${stepIdx}`}
+                    className="flex flex-col gap-1.5"
+                  >
                     {step.map((task) => (
                       <div
                         key={task.id}
@@ -462,7 +461,11 @@ function DetailedView({ data }: { data: ProjectData }) {
   )
 }
 
-function DetailedTaskListCard({ taskList }: { taskList: ProjectData["taskLists"][number] }) {
+function DetailedTaskListCard({
+  taskList,
+}: {
+  taskList: ProjectData["taskLists"][number]
+}) {
   const progress = calculateProgress(taskList.tasks)
   const storyPoints = calculateStoryPoints(taskList.tasks)
   const listHasStoryPoints = taskList.tasks.some((t) => t.storyPoints != null)
@@ -578,16 +581,8 @@ function DetailedTaskListCard({ taskList }: { taskList: ProjectData["taskLists"]
 
             {/* Down-arrow between steps */}
             {stepIdx < steps.length - 1 && (
-              <div className="flex flex-col items-center py-1 text-base-content/25">
-                <div className="h-4 w-px bg-current" />
-                <svg
-                  width="10"
-                  height="6"
-                  viewBox="0 0 10 6"
-                  fill="currentColor"
-                >
-                  <path d="M0 0 L10 0 L5 6 Z" />
-                </svg>
+              <div className="flex justify-center py-1 text-base-content/30">
+                <IoArrowDown size={16} />
               </div>
             )}
           </div>
