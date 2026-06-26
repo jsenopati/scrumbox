@@ -504,94 +504,94 @@ function DetailedTaskListCard({ taskList }: { taskList: ProjectData["taskLists"]
         />
       </div>
 
-      {/* Task flow */}
-      <div className="card-body gap-4">
+      {/* Task flow — vertical, full-width */}
+      <div className="card-body gap-0 pt-5">
         {taskList.tasks.length === 0 && (
           <p className="text-base-content/60 text-sm">No tasks in this list.</p>
         )}
-        {taskList.tasks.length > 0 && (
-          <div className="overflow-x-auto pb-2">
-            <div className="flex items-center gap-0 w-max">
-              {groupByStep(taskList.tasks).flatMap((step, stepIdx, steps) => {
-                const nodes = [
-                  <div key={`step-${stepIdx}`} className="flex flex-col gap-3">
-                    {step.map((task) => (
-                      <div
-                        key={task.id}
-                        className={`w-72 rounded-box border p-4 transition-colors ${
-                          task.status === "completed"
-                            ? "border-success/30 bg-success/5 opacity-60"
-                            : task.status === "in-progress"
-                              ? "border-warning/40 bg-warning/5"
-                              : "border-base-300 hover:bg-base-200"
-                        }`}
+        {groupByStep(taskList.tasks).map((step, stepIdx, steps) => (
+          <div key={stepIdx}>
+            {/* Concurrent tasks in this step sit side-by-side */}
+            <div className="flex flex-wrap gap-3">
+              {step.map((task) => (
+                <div
+                  key={task.id}
+                  className={`flex-1 min-w-64 rounded-box border p-4 transition-colors ${
+                    task.status === "completed"
+                      ? "border-success/30 bg-success/5 opacity-60"
+                      : task.status === "in-progress"
+                        ? "border-warning/40 bg-warning/5"
+                        : "border-base-300"
+                  }`}
+                >
+                  {/* Title + priority + status */}
+                  <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+                    <div className="flex items-center flex-wrap gap-2">
+                      <h3 className="font-semibold text-base">{task.title}</h3>
+                      <span
+                        className={`badge badge-sm ${priorityBadge[task.priority]}`}
                       >
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <div className="flex items-center flex-wrap gap-1.5 flex-1 min-w-0">
-                            <h3 className="font-semibold text-sm leading-snug">
-                              {task.title}
-                            </h3>
-                            <span
-                              className={`badge badge-xs ${priorityBadge[task.priority]}`}
-                            >
-                              {task.priority}
-                            </span>
-                          </div>
-                          <span
-                            className={`badge badge-sm shrink-0 ${statusBadge[task.status]}`}
-                          >
-                            {task.status.replace("-", " ")}
-                          </span>
-                        </div>
-                        {task.description && (
-                          <p className="text-base-content/60 text-xs mb-2 line-clamp-2">
-                            {task.description}
-                          </p>
-                        )}
-                        <div className="flex flex-wrap gap-1.5 items-center text-xs text-base-content/50">
-                          {task.assignees.length > 0 && (
-                            <span className="font-medium text-base-content/70">
-                              {task.assignees.join(", ")}
-                            </span>
-                          )}
-                          {task.storyPoints != null && (
-                            <>
-                              {task.assignees.length > 0 && <span>·</span>}
-                              <span>{task.storyPoints} pts</span>
-                            </>
-                          )}
-                          {task.dueDate && (
-                            <>
-                              <span>·</span>
-                              <span>
-                                Due:{" "}
-                                {new Date(
-                                  task.dueDate + "T00:00:00",
-                                ).toLocaleDateString()}
-                              </span>
-                            </>
-                          )}
-                          {task.tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="badge badge-xs badge-outline"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
+                        {task.priority}
+                      </span>
+                    </div>
+                    <span
+                      className={`badge shrink-0 ${statusBadge[task.status]}`}
+                    >
+                      {task.status.replace("-", " ")}
+                    </span>
+                  </div>
+
+                  {/* Full description — no truncation */}
+                  {task.description && (
+                    <p className="text-base-content/70 text-sm mb-3">
+                      {task.description}
+                    </p>
+                  )}
+
+                  {/* Meta row */}
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 items-center text-sm text-base-content/60">
+                    {task.assignees.length > 0 && (
+                      <span className="font-medium">
+                        {task.assignees.join(", ")}
+                      </span>
+                    )}
+                    {task.storyPoints != null && (
+                      <span>{task.storyPoints} pts</span>
+                    )}
+                    {task.dueDate && (
+                      <span>
+                        Due:{" "}
+                        {new Date(
+                          task.dueDate + "T00:00:00",
+                        ).toLocaleDateString()}
+                      </span>
+                    )}
+                    {task.tags.map((tag) => (
+                      <span key={tag} className="badge badge-sm badge-outline">
+                        {tag}
+                      </span>
                     ))}
-                  </div>,
-                ]
-                if (stepIdx < steps.length - 1) {
-                  nodes.push(<FlowArrow key={`arrow-${stepIdx}`} />)
-                }
-                return nodes
-              })}
+                  </div>
+                </div>
+              ))}
             </div>
+
+            {/* Down-arrow between steps */}
+            {stepIdx < steps.length - 1 && (
+              <div className="flex flex-col items-center py-1 text-base-content/25">
+                <div className="h-4 w-px bg-current" />
+                <svg
+                  width="10"
+                  height="6"
+                  viewBox="0 0 10 6"
+                  fill="currentColor"
+                >
+                  <path d="M0 0 L10 0 L5 6 Z" />
+                </svg>
+              </div>
+            )}
           </div>
-        )}
+        ))}
       </div>
     </div>
   )
