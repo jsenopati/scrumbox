@@ -42,6 +42,7 @@ export default async function DashboardPage() {
         <DashboardHeader lastUpdated={data.lastUpdated} role={role} />
         <DashboardView
           data={data}
+          role={role}
           anyStoryPoints={anyStoryPoints}
           allStoryPoints={allStoryPoints}
           storyPointPct={storyPointPct}
