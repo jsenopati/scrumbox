@@ -11,6 +11,10 @@ import {
   addTask,
   updateTask,
   deleteTask,
+  updateTaskNotes,
+  addChecklistItem,
+  setChecklistItemChecked,
+  deleteChecklistItem,
   addTeamMember,
   deleteTeamMember,
   reorderTaskList,
@@ -219,6 +223,45 @@ export async function deleteTaskAction(formData: FormData) {
 
   await deleteTask(taskListId, taskId)
 
+  revalidatePath("/manage")
+  revalidatePath("/dashboard")
+}
+
+// --- checklist + notes actions ---------------------------------------------
+
+export async function updateTaskNotesAction(taskId: string, notes: string) {
+  await requireRole("editor")
+  if (!taskId) throw new Error("Task id is required")
+  await updateTaskNotes(taskId, notes)
+  revalidatePath("/manage")
+  revalidatePath("/dashboard")
+}
+
+export async function addChecklistItemAction(taskId: string, content: string) {
+  await requireRole("editor")
+  if (!taskId) throw new Error("Task id is required")
+  const trimmed = content.trim()
+  if (!trimmed) throw new Error("Checklist item text is required")
+  await addChecklistItem(taskId, trimmed)
+  revalidatePath("/manage")
+  revalidatePath("/dashboard")
+}
+
+export async function toggleChecklistItemAction(
+  itemId: string,
+  checked: boolean,
+) {
+  await requireRole("editor")
+  if (!itemId) throw new Error("Checklist item id is required")
+  await setChecklistItemChecked(itemId, checked)
+  revalidatePath("/manage")
+  revalidatePath("/dashboard")
+}
+
+export async function deleteChecklistItemAction(itemId: string) {
+  await requireRole("editor")
+  if (!itemId) throw new Error("Checklist item id is required")
+  await deleteChecklistItem(itemId)
   revalidatePath("/manage")
   revalidatePath("/dashboard")
 }

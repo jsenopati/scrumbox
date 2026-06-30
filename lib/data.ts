@@ -1,5 +1,12 @@
 import { supabase } from "./supabase"
 
+export interface ChecklistItem {
+  id: string
+  content: string
+  checked: boolean
+  sortOrder: number
+}
+
 export interface Task {
   id: string
   title: string
@@ -10,6 +17,8 @@ export interface Task {
   priority: "backlog" | "low" | "medium" | "high" | "asap"
   dueDate?: string
   tags: string[]
+  notes: string
+  checklist: ChecklistItem[]
   sortOrder: number
   createdAt: string
   updatedAt: string
@@ -48,9 +57,19 @@ interface TaskRow {
   priority: Task["priority"]
   due_date: string | null
   tags: string[] | null
+  notes: string | null
   sort_order: number
   created_at: string
   updated_at: string
+}
+
+interface ChecklistItemRow {
+  id: string
+  task_id: string
+  content: string
+  checked: boolean
+  sort_order: number
+  created_at: string
 }
 
 interface TaskListRow {
@@ -66,7 +85,16 @@ interface TaskListRow {
   created_at: string
 }
 
-function mapTaskRow(row: TaskRow): Task {
+function mapChecklistItemRow(row: ChecklistItemRow): ChecklistItem {
+  return {
+    id: row.id,
+    content: row.content,
+    checked: row.checked,
+    sortOrder: row.sort_order,
+  }
+}
+
+function mapTaskRow(row: TaskRow, checklist: ChecklistItem[] = []): Task {
   return {
     id: row.id,
     title: row.title,
@@ -77,6 +105,8 @@ function mapTaskRow(row: TaskRow): Task {
     priority: row.priority,
     dueDate: row.due_date ?? undefined,
     tags: row.tags ?? [],
+    notes: row.notes ?? "",
+    checklist,
     sortOrder: row.sort_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -101,7 +131,7 @@ function mapTaskListRow(row: TaskListRow, tasks: Task[]): TaskList {
 }
 
 export async function getProjectData(): Promise<ProjectData> {
-  const [listsResult, tasksResult] = await Promise.all([
+  const [listsResult, tasksResult, checklistResult] = await Promise.all([
     supabase
       .from("task_lists")
       .select("*")
@@ -112,18 +142,32 @@ export async function getProjectData(): Promise<ProjectData> {
       .select("*")
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true }),
+    supabase
+      .from("task_checklist_items")
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true }),
   ])
 
   if (listsResult.error) throw new Error(listsResult.error.message)
   if (tasksResult.error) throw new Error(tasksResult.error.message)
+  if (checklistResult.error) throw new Error(checklistResult.error.message)
 
   const listRows = (listsResult.data ?? []) as TaskListRow[]
   const taskRows = (tasksResult.data ?? []) as TaskRow[]
+  const checklistRows = (checklistResult.data ?? []) as ChecklistItemRow[]
+
+  const checklistByTask = new Map<string, ChecklistItem[]>()
+  for (const row of checklistRows) {
+    const list = checklistByTask.get(row.task_id) ?? []
+    list.push(mapChecklistItemRow(row))
+    checklistByTask.set(row.task_id, list)
+  }
 
   const tasksByList = new Map<string, Task[]>()
   for (const row of taskRows) {
     const list = tasksByList.get(row.task_list_id) ?? []
-    list.push(mapTaskRow(row))
+    list.push(mapTaskRow(row, checklistByTask.get(row.id) ?? []))
     tasksByList.set(row.task_list_id, list)
   }
 
@@ -234,7 +278,10 @@ export async function deleteTaskList(id: string): Promise<void> {
 
 export async function addTask(
   taskListId: string,
-  task: Omit<Task, "id" | "sortOrder" | "createdAt" | "updatedAt">,
+  task: Omit<
+    Task,
+    "id" | "sortOrder" | "createdAt" | "updatedAt" | "notes" | "checklist"
+  >,
 ): Promise<Task> {
   // Place new task at the end of this list
   const { data: maxRow } = await supabase
@@ -285,6 +332,7 @@ export async function updateTask(
   if (updates.priority !== undefined) patch.priority = updates.priority
   if (updates.dueDate !== undefined) patch.due_date = updates.dueDate ?? null
   if (updates.tags !== undefined) patch.tags = updates.tags
+  if (updates.notes !== undefined) patch.notes = updates.notes
   if (updates.sortOrder !== undefined) patch.sort_order = updates.sortOrder
 
   const { error } = await supabase
@@ -306,6 +354,62 @@ export async function deleteTask(
     .eq("id", taskId)
     .eq("task_list_id", taskListId)
 
+  if (error) throw new Error(error.message)
+}
+
+// --- checklist + notes writes ----------------------------------------------
+
+export async function updateTaskNotes(
+  taskId: string,
+  notes: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("tasks")
+    .update({ notes, updated_at: new Date().toISOString() })
+    .eq("id", taskId)
+  if (error) throw new Error(error.message)
+}
+
+export async function addChecklistItem(
+  taskId: string,
+  content: string,
+): Promise<ChecklistItem> {
+  const { data: maxRow } = await supabase
+    .from("task_checklist_items")
+    .select("sort_order")
+    .eq("task_id", taskId)
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .single()
+  const nextOrder =
+    ((maxRow as { sort_order: number } | null)?.sort_order ?? 0) + 10
+
+  const { data, error } = await supabase
+    .from("task_checklist_items")
+    .insert({ task_id: taskId, content, sort_order: nextOrder })
+    .select("*")
+    .single()
+
+  if (error) throw new Error(error.message)
+  return mapChecklistItemRow(data as ChecklistItemRow)
+}
+
+export async function setChecklistItemChecked(
+  itemId: string,
+  checked: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from("task_checklist_items")
+    .update({ checked })
+    .eq("id", itemId)
+  if (error) throw new Error(error.message)
+}
+
+export async function deleteChecklistItem(itemId: string): Promise<void> {
+  const { error } = await supabase
+    .from("task_checklist_items")
+    .delete()
+    .eq("id", itemId)
   if (error) throw new Error(error.message)
 }
 

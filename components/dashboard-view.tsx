@@ -1,9 +1,17 @@
 "use client"
 
 import { useState } from "react"
-import { IoArrowForward, IoArrowDown, IoChevronForward } from "react-icons/io5"
+import {
+  IoArrowForward,
+  IoArrowDown,
+  IoChevronForward,
+  IoCheckmarkDoneOutline,
+  IoDocumentTextOutline,
+} from "react-icons/io5"
 import { calculateProgress, calculateStoryPoints } from "@/lib/metrics"
 import type { ProjectData } from "@/lib/data"
+import type { Role } from "@/lib/session"
+import { TaskDetailModal } from "./task-detail-modal"
 
 const statusBadge: Record<string, string> = {
   completed: "badge-success",
@@ -27,6 +35,7 @@ const priorityLabel: Record<string, string> = {
 
 interface Props {
   data: ProjectData
+  role: Role
   anyStoryPoints: boolean
   allStoryPoints: { total: number; completed: number }
   storyPointPct: number
@@ -38,6 +47,7 @@ interface Props {
 
 export function DashboardView({
   data,
+  role,
   anyStoryPoints,
   allStoryPoints,
   storyPointPct,
@@ -48,6 +58,20 @@ export function DashboardView({
 }: Props) {
   const [archiveOpen, setArchiveOpen] = useState(false)
   const [simple, setSimple] = useState(true)
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+
+  // Derive the live task + its list from data so the modal reflects edits.
+  let selectedTask: ProjectData["taskLists"][number]["tasks"][number] | null =
+    null
+  let selectedListName = ""
+  for (const list of data.taskLists) {
+    const found = list.tasks.find((t) => t.id === selectedTaskId)
+    if (found) {
+      selectedTask = found
+      selectedListName = list.name
+      break
+    }
+  }
 
   return (
     <>
@@ -102,7 +126,11 @@ export function DashboardView({
         </div>
       )}
 
-      {simple ? <SimpleView data={data} /> : <DetailedView data={data} />}
+      {simple ? (
+        <SimpleView data={data} onSelectTask={setSelectedTaskId} />
+      ) : (
+        <DetailedView data={data} />
+      )}
 
       {data.archivedTaskLists.length > 0 && (
         <div className="mt-6">
@@ -152,6 +180,13 @@ export function DashboardView({
           )}
         </div>
       )}
+
+      <TaskDetailModal
+        task={selectedTask}
+        listName={selectedListName}
+        role={role}
+        onClose={() => setSelectedTaskId(null)}
+      />
     </>
   )
 }
@@ -182,7 +217,13 @@ function SectionHeader({
 // Simple view
 // ---------------------------------------------------------------------------
 
-function SimpleView({ data }: { data: ProjectData }) {
+function SimpleView({
+  data,
+  onSelectTask,
+}: {
+  data: ProjectData
+  onSelectTask: (taskId: string) => void
+}) {
   const focus = data.taskLists.filter((tl) => tl.section === "focus")
   const upnext = data.taskLists.filter((tl) => tl.section === "upnext")
   const concurrent = data.taskLists.filter((tl) => tl.section === "concurrent")
@@ -195,7 +236,11 @@ function SimpleView({ data }: { data: ProjectData }) {
           <SectionHeader title="Currently working on" />
           <div className="space-y-4">
             {focus.map((taskList) => (
-              <SimpleTaskListCard key={taskList.id} taskList={taskList} />
+              <SimpleTaskListCard
+                key={taskList.id}
+                taskList={taskList}
+                onSelectTask={onSelectTask}
+              />
             ))}
           </div>
         </div>
@@ -205,7 +250,11 @@ function SimpleView({ data }: { data: ProjectData }) {
           <SectionHeader title="Up next" />
           <div className="space-y-4">
             {upnext.map((taskList) => (
-              <SimpleTaskListCard key={taskList.id} taskList={taskList} />
+              <SimpleTaskListCard
+                key={taskList.id}
+                taskList={taskList}
+                onSelectTask={onSelectTask}
+              />
             ))}
           </div>
         </div>
@@ -215,7 +264,11 @@ function SimpleView({ data }: { data: ProjectData }) {
           <SectionHeader title="Concurrent Tasks" subtitle="dynamic priority" />
           <div className="space-y-4">
             {concurrent.map((taskList) => (
-              <SimpleTaskListCard key={taskList.id} taskList={taskList} />
+              <SimpleTaskListCard
+                key={taskList.id}
+                taskList={taskList}
+                onSelectTask={onSelectTask}
+              />
             ))}
           </div>
         </div>
@@ -225,7 +278,11 @@ function SimpleView({ data }: { data: ProjectData }) {
           <SectionHeader title="Backlog" />
           <div className="space-y-4 opacity-80">
             {backlog.map((taskList) => (
-              <SimpleTaskListCard key={taskList.id} taskList={taskList} />
+              <SimpleTaskListCard
+                key={taskList.id}
+                taskList={taskList}
+                onSelectTask={onSelectTask}
+              />
             ))}
           </div>
         </div>
@@ -262,8 +319,10 @@ function FlowArrow() {
 
 function SimpleTaskListCard({
   taskList,
+  onSelectTask,
 }: {
   taskList: ProjectData["taskLists"][number]
+  onSelectTask: (taskId: string) => void
 }) {
   const progress = calculateProgress(taskList.tasks)
   const notStarted = taskList.tasks.filter(
@@ -314,9 +373,11 @@ function SimpleTaskListCard({
                     className="flex flex-col gap-1.5"
                   >
                     {step.map((task) => (
-                      <div
+                      <button
                         key={task.id}
-                        className={`flex flex-col gap-1 rounded-btn border px-3 py-2 w-48 ${
+                        type="button"
+                        onClick={() => onSelectTask(task.id)}
+                        className={`flex flex-col gap-1 rounded-btn border px-3 py-2 w-48 text-left cursor-pointer transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                           task.status === "completed"
                             ? "border-success/30 bg-success/5 opacity-60"
                             : task.status === "in-progress"
@@ -347,8 +408,20 @@ function SimpleTaskListCard({
                                 ? "Active"
                                 : "Done"}
                           </span>
+                          {task.checklist.length > 0 && (
+                            <span className="badge badge-xs badge-ghost gap-0.5">
+                              <IoCheckmarkDoneOutline size={11} />
+                              {task.checklist.filter((i) => i.checked).length}/
+                              {task.checklist.length}
+                            </span>
+                          )}
+                          {task.notes.trim().length > 0 && (
+                            <span className="badge badge-xs badge-ghost">
+                              <IoDocumentTextOutline size={11} />
+                            </span>
+                          )}
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>,
                 ]
