@@ -35,6 +35,7 @@ import {
   moveTaskDownAction,
 } from "./actions"
 import { SubmitButton } from "@/components/submit-button"
+import { TaskChecklistNotes } from "@/components/task-checklist-notes"
 
 export const dynamic = "force-dynamic"
 
@@ -527,6 +528,9 @@ export default async function ManagePage() {
                               Save task
                             </SubmitButton>
                           </form>
+
+                          <div className="divider my-4" />
+                          <TaskChecklistNotes task={task} canEdit />
                         </div>
                       </div>
                     </div>
