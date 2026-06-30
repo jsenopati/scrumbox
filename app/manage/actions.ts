@@ -43,6 +43,12 @@ function parseAssignees(formData: FormData): string[] {
   return (formData.getAll("assignee") as string[]).filter((v) => v.length > 0)
 }
 
+function parseChecklistItems(formData: FormData): string[] {
+  return (formData.getAll("checklistItem") as string[])
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0)
+}
+
 function parseStatus(formData: FormData): Task["status"] {
   const value = str(formData, "status")
   return value === "in-progress" || value === "completed"
@@ -172,7 +178,7 @@ export async function createTaskAction(formData: FormData) {
   const title = str(formData, "title")
   if (!title) throw new Error("Task title is required")
 
-  await addTask(taskListId, {
+  const created = await addTask(taskListId, {
     title,
     description: str(formData, "description"),
     assignees: parseAssignees(formData),
@@ -182,6 +188,13 @@ export async function createTaskAction(formData: FormData) {
     dueDate: optionalStr(formData, "dueDate"),
     tags: parseTags(formData),
   })
+
+  const notes = str(formData, "notes")
+  if (notes) await updateTaskNotes(created.id, notes)
+
+  for (const content of parseChecklistItems(formData)) {
+    await addChecklistItem(created.id, content)
+  }
 
   revalidatePath("/manage")
   revalidatePath("/dashboard")

@@ -36,6 +36,7 @@ import {
 } from "./actions"
 import { SubmitButton } from "@/components/submit-button"
 import { TaskChecklistNotes } from "@/components/task-checklist-notes"
+import { ChecklistBuilder } from "@/components/checklist-builder"
 
 export const dynamic = "force-dynamic"
 
@@ -222,6 +223,21 @@ function TaskFields({ task, team }: { task?: Task; team: string[] }) {
           className="input w-full"
         />
       </fieldset>
+      {!task && (
+        <>
+          <fieldset className="fieldset md:col-span-2">
+            <legend className="fieldset-legend">Notes (optional)</legend>
+            <textarea
+              name="notes"
+              className="textarea w-full min-h-24"
+              placeholder="Add notes during or after the task…"
+            />
+          </fieldset>
+          <div className="md:col-span-2">
+            <ChecklistBuilder />
+          </div>
+        </>
+      )}
       {task && (
         <fieldset className="fieldset md:col-span-2">
           <legend className="fieldset-legend">Step</legend>
