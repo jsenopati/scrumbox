@@ -1,11 +1,7 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
-import {
-  IoTrashOutline,
-  IoAdd,
-  IoCheckmarkCircle,
-} from "react-icons/io5"
+import { useState, useTransition } from "react"
+import { IoTrashOutline, IoAdd, IoCheckmarkCircle } from "react-icons/io5"
 import type { Task } from "@/lib/data"
 import {
   addChecklistItemAction,
@@ -155,12 +151,16 @@ export function NotesSection({
   const [isPending, startTransition] = useTransition()
   const [notes, setNotes] = useState(task.notes)
   const [savedAt, setSavedAt] = useState<number | null>(null)
+  const [synced, setSynced] = useState({ id: task.id, notes: task.notes })
 
-  // Keep local state in sync when a different task is opened or notes change.
-  useEffect(() => {
+  // Keep local state in sync when a different task is opened or its notes
+  // change externally. Done during render (per React guidance) instead of in
+  // an effect to avoid cascading renders.
+  if (synced.id !== task.id || synced.notes !== task.notes) {
+    setSynced({ id: task.id, notes: task.notes })
     setNotes(task.notes)
     setSavedAt(null)
-  }, [task.id, task.notes])
+  }
 
   const dirty = notes !== task.notes
 

@@ -1,0 +1,83 @@
+# Plan: Fold `/manage` CRUD into the dashboard (inline, editor-gated)
+
+Status: in progress. Commit 1 (deps) done. Pick up at commit 2.
+
+## Vision (locked)
+
+- **No edit-mode toggle.** Everything is gated on `canEdit = role === "editor"`,
+  mirroring the existing inline checklist/notes editing in the task modal.
+- **Viewers** see today's dashboard unchanged. **Editors (admins)** get every
+  field editable in place.
+- **Task modal**: fields become editable behind a single **Save** button
+  (Notes-style dirty/"Saved" feedback), reusing `updateTaskAction`.
+- **Team members + New task list**: editor-only sections rendered on the
+  dashboard (lifted from the manage page — not suited to inline editing).
+- **Drag-and-drop reorder** (tasks within a list, lists within a section) via
+  Atlassian **Pragmatic drag and drop**. No up/down arrow buttons.
+- **Delete the `/manage` route** at the very end.
+
+## Key facts / gotchas
+
+- Roles live in `lib/session.ts` (`viewer` | `editor`). **`editor` == admin.**
+- Server actions currently in `app/manage/actions.ts`; all call
+  `revalidatePath("/manage")` **and** `revalidatePath("/dashboard")`.
+- `components/task-checklist-notes.tsx` imports actions from
+  `@/app/manage/actions`.
+- **Reorder is swap-only today** (`reorderTaskList` / `reorderTask` take
+  `"up" | "down"`). Drag-and-drop needs arbitrary repositioning → add
+  index-based `setTaskListOrder(orderedIds)` / `setTaskOrder(listId, orderedIds)`
+  that rewrite `sort_order` from a full ordered id list.
+- **`Task.sortOrder` doubles as the flow "step"** — `groupByStep` in
+  `components/dashboard-view.tsx` treats tasks sharing a `sortOrder` as
+  concurrent (no arrow between them). Dragging tasks will linearize steps;
+  keep the manual **Step** field in the modal for setting concurrency.
+- `TaskFields` / `TaskListFields` are currently defined inline inside
+  `app/manage/page.tsx` and need extracting to be reused on the dashboard.
+- DnD packages installed: `@atlaskit/pragmatic-drag-and-drop`,
+  `@atlaskit/pragmatic-drag-and-drop-hitbox`,
+  `@atlaskit/pragmatic-drag-and-drop-auto-scroll`.
+
+## Decisions locked
+
+- Save behavior: **Save button in the modal** (not auto-save).
+- Reordering: **drag-and-drop only**, no arrows.
+- DnD library: **Atlassian Pragmatic drag and drop**.
+
+## Commit sequence
+
+Each commit must build + lint green and leave the app working. `/manage` stays
+alive until the final commit so nothing breaks mid-stream.
+
+1. **`chore(deps): install Pragmatic drag and drop`** — ✅ **DONE**
+   Added `@atlaskit/pragmatic-drag-and-drop` `^2.0.1`, `-hitbox` `^2.0.0`,
+   `-auto-scroll` `^3.0.0`.
+2. **`refactor(actions): move server actions out of /manage`**
+   Relocate `app/manage/actions.ts` → `lib/actions.ts`. Update imports in
+   `app/manage/page.tsx` and `components/task-checklist-notes.tsx`. Pure move.
+3. **`feat(data): index-based reorder for lists and tasks`**
+   Add `setTaskListOrder` / `setTaskOrder` to `lib/data.ts` +
+   `reorderTaskListsAction` / `reorderTasksAction`. Additive, not wired to UI.
+4. **`refactor(ui): extract shared TaskFields / TaskListFields`**
+   Move them into `components/task-fields.tsx`; manage page imports them.
+5. **`feat(dashboard): editable task fields in the detail modal`**
+   In `components/task-detail-modal.tsx`, render `TaskFields` inside a
+   `<form action={updateTaskAction}>` with a Save button + delete-task button
+   when `canEdit`; read-only otherwise. Thread `teamNames`
+   `dashboard/page.tsx` → `DashboardView` → modal.
+6. **`feat(dashboard): inline task-list editing on cards`**
+   Editor-only edit-details / add-task / archive affordances on list cards.
+7. **`feat(dashboard): admin-only Team Members & New Task List sections`**
+   Lifted from the manage page, rendered when `canEdit`.
+8. **`feat(dashboard): drag-and-drop reordering`** (split in two)
+   - 8a — draggable task-list cards within a section → `reorderTaskListsAction`.
+   - 8b — draggable task nodes within a list → `reorderTasksAction`
+     (document step-linearization; concurrency stays manual via Step field).
+9. **`feat: remove /manage and clean up`**
+   Delete `app/manage/`, remove the header Manage link, drop the dead swap
+   actions and all `revalidatePath("/manage")` calls.
+
+## Open micro-decisions (for later commits)
+
+- **Cross-section list dragging** (drop a list into a different section to change
+  its `section`) — bonus, currently scoped out; 8a is within-section only.
+- **Actions home** — proposed `lib/actions.ts`; could be `app/actions.ts` instead.
