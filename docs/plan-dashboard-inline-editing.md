@@ -54,9 +54,9 @@ alive until the final commit so nothing breaks mid-stream.
 2. **`refactor(actions): move server actions out of /manage`** — ✅ **DONE**
    Relocated `app/manage/actions.ts` → `lib/actions.ts` (via `git mv`). Updated imports in
    `app/manage/page.tsx` and `components/task-checklist-notes.tsx`. Pure move.
-3. **`feat(data): index-based reorder for lists and tasks`**
-   Add `setTaskListOrder` / `setTaskOrder` to `lib/data.ts` +
-   `reorderTaskListsAction` / `reorderTasksAction`. Additive, not wired to UI.
+3. **`feat(data): index-based reorder for lists and tasks`** — ✅ **DONE**
+   Added `setTaskListOrder` / `setTaskOrder` to `lib/data.ts` +
+   `reorderTaskListsAction` / `reorderTasksAction` in `lib/actions.ts`. Additive, not wired to UI.
 4. **`refactor(ui): extract shared TaskFields / TaskListFields`**
    Move them into `components/task-fields.tsx`; manage page imports them.
 5. **`feat(dashboard): editable task fields in the detail modal`**

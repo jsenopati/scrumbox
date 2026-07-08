@@ -19,6 +19,8 @@ import {
   deleteTeamMember,
   reorderTaskList,
   reorderTask,
+  setTaskListOrder,
+  setTaskOrder,
   type Task,
 } from "@/lib/data"
 
@@ -341,6 +343,28 @@ export async function moveTaskDownAction(formData: FormData) {
   if (!taskListId || !taskId)
     throw new Error("Task list id and task id are required")
   await reorderTask(taskListId, taskId, "down")
+  revalidatePath("/manage")
+  revalidatePath("/dashboard")
+}
+
+// --- drag and drop reorder (index-based) ------------------------------------
+
+export async function reorderTaskListsAction(orderedIds: string[]) {
+  await requireRole("editor")
+  if (!Array.isArray(orderedIds) || orderedIds.length === 0) return
+  await setTaskListOrder(orderedIds)
+  revalidatePath("/manage")
+  revalidatePath("/dashboard")
+}
+
+export async function reorderTasksAction(
+  taskListId: string,
+  orderedIds: string[],
+) {
+  await requireRole("editor")
+  if (!taskListId) throw new Error("Task list id is required")
+  if (!Array.isArray(orderedIds) || orderedIds.length === 0) return
+  await setTaskOrder(taskListId, orderedIds)
   revalidatePath("/manage")
   revalidatePath("/dashboard")
 }

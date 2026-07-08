@@ -518,6 +518,50 @@ export async function reorderTask(
   if (e2) throw new Error(e2.message)
 }
 
+// --- bulk reorder (index-based, for drag and drop) -------------------------
+
+/**
+ * Rewrites sort_order for the given task lists to match the order of
+ * `orderedIds`. Pass the full set of ids whose relative order should be
+ * applied (e.g. all active lists in their new display order).
+ */
+export async function setTaskListOrder(orderedIds: string[]): Promise<void> {
+  const results = await Promise.all(
+    orderedIds.map((id, index) =>
+      supabase
+        .from("task_lists")
+        .update({ sort_order: (index + 1) * 10 })
+        .eq("id", id),
+    ),
+  )
+  for (const { error } of results) {
+    if (error) throw new Error(error.message)
+  }
+}
+
+/**
+ * Rewrites sort_order for tasks within a list to match `orderedIds`. Note this
+ * linearises the flow "step" (each task gets a distinct sort_order); concurrent
+ * grouping is set separately via the task's Step field.
+ */
+export async function setTaskOrder(
+  taskListId: string,
+  orderedIds: string[],
+): Promise<void> {
+  const results = await Promise.all(
+    orderedIds.map((id, index) =>
+      supabase
+        .from("tasks")
+        .update({ sort_order: (index + 1) * 10 })
+        .eq("id", id)
+        .eq("task_list_id", taskListId),
+    ),
+  )
+  for (const { error } of results) {
+    if (error) throw new Error(error.message)
+  }
+}
+
 // --- computed metrics -------------------------------------------------------
 
 export { calculateProgress, calculateStoryPoints } from "./metrics"
