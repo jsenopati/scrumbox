@@ -8,7 +8,7 @@ import {
   toggleChecklistItemAction,
   deleteChecklistItemAction,
   updateTaskNotesAction,
-} from "@/app/manage/actions"
+} from "@/lib/actions"
 
 export function TaskChecklistNotes({
   task,

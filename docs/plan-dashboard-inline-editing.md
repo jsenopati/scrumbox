@@ -51,8 +51,8 @@ alive until the final commit so nothing breaks mid-stream.
 1. **`chore(deps): install Pragmatic drag and drop`** — ✅ **DONE**
    Added `@atlaskit/pragmatic-drag-and-drop` `^2.0.1`, `-hitbox` `^2.0.0`,
    `-auto-scroll` `^3.0.0`.
-2. **`refactor(actions): move server actions out of /manage`**
-   Relocate `app/manage/actions.ts` → `lib/actions.ts`. Update imports in
+2. **`refactor(actions): move server actions out of /manage`** — ✅ **DONE**
+   Relocated `app/manage/actions.ts` → `lib/actions.ts` (via `git mv`). Updated imports in
    `app/manage/page.tsx` and `components/task-checklist-notes.tsx`. Pure move.
 3. **`feat(data): index-based reorder for lists and tasks`**
    Add `setTaskListOrder` / `setTaskOrder` to `lib/data.ts` +

@@ -33,7 +33,7 @@ import {
   moveTaskListDownAction,
   moveTaskUpAction,
   moveTaskDownAction,
-} from "./actions"
+} from "@/lib/actions"
 import { SubmitButton } from "@/components/submit-button"
 import { TaskChecklistNotes } from "@/components/task-checklist-notes"
 import { ChecklistBuilder } from "@/components/checklist-builder"
