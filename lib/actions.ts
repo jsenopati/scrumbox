@@ -292,6 +292,7 @@ export async function addTeamMemberAction(formData: FormData) {
   await addTeamMember(name)
 
   revalidatePath("/manage")
+  revalidatePath("/dashboard")
 }
 
 export async function deleteTeamMemberAction(formData: FormData) {
@@ -303,6 +304,7 @@ export async function deleteTeamMemberAction(formData: FormData) {
   await deleteTeamMember(id)
 
   revalidatePath("/manage")
+  revalidatePath("/dashboard")
 }
 
 // --- reorder actions --------------------------------------------------------

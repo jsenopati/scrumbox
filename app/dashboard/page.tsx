@@ -48,6 +48,7 @@ export default async function DashboardPage() {
           data={data}
           role={role}
           teamNames={teamNames}
+          teamMembers={teamMembers}
           anyStoryPoints={anyStoryPoints}
           allStoryPoints={allStoryPoints}
           storyPointPct={storyPointPct}

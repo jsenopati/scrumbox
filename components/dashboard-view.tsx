@@ -9,10 +9,11 @@ import {
   IoDocumentTextOutline,
 } from "react-icons/io5"
 import { calculateProgress, calculateStoryPoints } from "@/lib/metrics"
-import type { ProjectData } from "@/lib/data"
+import type { ProjectData, TeamMember } from "@/lib/data"
 import type { Role } from "@/lib/session"
 import { TaskDetailModal } from "./task-detail-modal"
 import { ListAdminControls } from "./list-admin-controls"
+import { DashboardAdminTools } from "./dashboard-admin-tools"
 
 const statusBadge: Record<string, string> = {
   completed: "badge-success",
@@ -38,6 +39,7 @@ interface Props {
   data: ProjectData
   role: Role
   teamNames: string[]
+  teamMembers: TeamMember[]
   anyStoryPoints: boolean
   allStoryPoints: { total: number; completed: number }
   storyPointPct: number
@@ -51,6 +53,7 @@ export function DashboardView({
   data,
   role,
   teamNames,
+  teamMembers,
   anyStoryPoints,
   allStoryPoints,
   storyPointPct,
@@ -123,6 +126,8 @@ export function DashboardView({
           </button>
         </div>
       </div>
+
+      {canEdit && <DashboardAdminTools teamMembers={teamMembers} />}
 
       {data.taskLists.length === 0 && (
         <div className="card bg-base-100 shadow">

@@ -1,6 +1,6 @@
 # Plan: Fold `/manage` CRUD into the dashboard (inline, editor-gated)
 
-Status: in progress. Commits 1–6 done. Pick up at commit 7.
+Status: in progress. Commits 1–7 done. Pick up at commit 8.
 
 ## Vision (locked)
 
@@ -68,8 +68,9 @@ alive until the final commit so nothing breaks mid-stream.
    New `components/list-admin-controls.tsx` (edit-details / add-task dialogs +
    archive) rendered on Simple and Detailed list cards for editors. Threaded
    `canEdit` + `teamNames` into both card components.
-7. **`feat(dashboard): admin-only Team Members & New Task List sections`**
-   Lifted from the manage page, rendered when `canEdit`.
+7. **`feat(dashboard): admin-only Team Members & New Task List sections`** — ✅ **DONE**
+   New `components/dashboard-admin-tools.tsx` (team-member add/remove +
+   new-list form), rendered when `canEdit`. Threaded `teamMembers` from page.
 8. **`feat(dashboard): drag-and-drop reordering`** (split in two)
    - 8a — draggable task-list cards within a section → `reorderTaskListsAction`.
    - 8b — draggable task nodes within a list → `reorderTasksAction`
