@@ -1,6 +1,6 @@
 # Plan: Fold `/manage` CRUD into the dashboard (inline, editor-gated)
 
-Status: in progress. Commit 1 (deps) done. Pick up at commit 2.
+Status: in progress. Commits 1–4 done. Pick up at commit 5.
 
 ## Vision (locked)
 
@@ -57,8 +57,8 @@ alive until the final commit so nothing breaks mid-stream.
 3. **`feat(data): index-based reorder for lists and tasks`** — ✅ **DONE**
    Added `setTaskListOrder` / `setTaskOrder` to `lib/data.ts` +
    `reorderTaskListsAction` / `reorderTasksAction` in `lib/actions.ts`. Additive, not wired to UI.
-4. **`refactor(ui): extract shared TaskFields / TaskListFields`**
-   Move them into `components/task-fields.tsx`; manage page imports them.
+4. **`refactor(ui): extract shared TaskFields / TaskListFields`** — ✅ **DONE**
+   Moved them into `components/task-fields.tsx`; manage page imports them.
 5. **`feat(dashboard): editable task fields in the detail modal`**
    In `components/task-detail-modal.tsx`, render `TaskFields` inside a
    `<form action={updateTaskAction}>` with a Save button + delete-task button
