@@ -1,6 +1,6 @@
 # Plan: Fold `/manage` CRUD into the dashboard (inline, editor-gated)
 
-Status: in progress. Commits 1–8 done. Pick up at commit 9.
+Status: complete. All 9 commits done.
 
 ## Vision (locked)
 
@@ -79,9 +79,11 @@ alive until the final commit so nothing breaks mid-stream.
    - 8b — draggable task nodes within a list (Detailed view) →
      `reorderTasksAction`; drag linearizes steps, concurrency stays manual via
      the Step field. Simple-view task nodes remain click-only.
-9. **`feat: remove /manage and clean up`**
-   Delete `app/manage/`, remove the header Manage link, drop the dead swap
-   actions and all `revalidatePath("/manage")` calls.
+9. **`feat: remove /manage and clean up`** — ✅ **DONE**
+   Deleted `app/manage/`, removed the header Manage link + `role` prop, dropped
+   the dead swap actions/data functions, stripped all `revalidatePath("/manage")`
+   calls, narrowed the middleware matcher, and pointed the login redirect at
+   `/dashboard`.
 
 ## Open micro-decisions (for later commits)
 

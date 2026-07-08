@@ -28,8 +28,7 @@ export default function Home() {
         return
       }
 
-      const { role } = await res.json()
-      router.replace(role === "editor" ? "/manage" : "/dashboard")
+      router.replace("/dashboard")
     } catch {
       setError("Something went wrong. Please try again.")
       setSubmitting(false)
