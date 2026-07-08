@@ -1,6 +1,6 @@
 # Plan: Fold `/manage` CRUD into the dashboard (inline, editor-gated)
 
-Status: in progress. Commits 1–7 done. Pick up at commit 8.
+Status: in progress. Commits 1–8 done. Pick up at commit 9.
 
 ## Vision (locked)
 
@@ -71,10 +71,14 @@ alive until the final commit so nothing breaks mid-stream.
 7. **`feat(dashboard): admin-only Team Members & New Task List sections`** — ✅ **DONE**
    New `components/dashboard-admin-tools.tsx` (team-member add/remove +
    new-list form), rendered when `canEdit`. Threaded `teamMembers` from page.
-8. **`feat(dashboard): drag-and-drop reordering`** (split in two)
-   - 8a — draggable task-list cards within a section → `reorderTaskListsAction`.
-   - 8b — draggable task nodes within a list → `reorderTasksAction`
-     (document step-linearization; concurrency stays manual via Step field).
+8. **`feat(dashboard): drag-and-drop reordering`** — ✅ **DONE**
+   New `components/sortable.tsx` (Pragmatic DnD closest-edge helpers).
+   - 8a — draggable task-list cards within a section (Simple + Detailed) →
+     `reorderTaskListsAction` (rebuilds full global order via
+     `reorderSectionInGlobal`).
+   - 8b — draggable task nodes within a list (Detailed view) →
+     `reorderTasksAction`; drag linearizes steps, concurrency stays manual via
+     the Step field. Simple-view task nodes remain click-only.
 9. **`feat: remove /manage and clean up`**
    Delete `app/manage/`, remove the header Manage link, drop the dead swap
    actions and all `revalidatePath("/manage")` calls.
