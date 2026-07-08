@@ -1,10 +1,13 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { IoClose } from "react-icons/io5"
+import { IoClose, IoTrashOutline } from "react-icons/io5"
 import type { Task } from "@/lib/data"
 import type { Role } from "@/lib/session"
+import { updateTaskAction, deleteTaskAction } from "@/lib/actions"
 import { ChecklistSection, NotesSection } from "./task-checklist-notes"
+import { TaskFields } from "./task-fields"
+import { SubmitButton } from "./submit-button"
 
 const statusBadge: Record<string, string> = {
   completed: "badge-success",
@@ -27,11 +30,20 @@ const statusLabel: Record<string, string> = {
 interface Props {
   task: Task | null
   listName: string
+  listId: string
   role: Role
+  teamNames: string[]
   onClose: () => void
 }
 
-export function TaskDetailModal({ task, listName, role, onClose }: Props) {
+export function TaskDetailModal({
+  task,
+  listName,
+  listId,
+  role,
+  teamNames,
+  onClose,
+}: Props) {
   const ref = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
@@ -45,7 +57,14 @@ export function TaskDetailModal({ task, listName, role, onClose }: Props) {
     <dialog ref={ref} className="modal" onClose={onClose}>
       <div className="modal-box max-w-2xl">
         {task && (
-          <TaskDetailContent task={task} listName={listName} role={role} />
+          <TaskDetailContent
+            key={task.id}
+            task={task}
+            listName={listName}
+            listId={listId}
+            role={role}
+            teamNames={teamNames}
+          />
         )}
         <form method="dialog" className="modal-action mt-6">
           <button className="btn btn-sm">Close</button>
@@ -69,53 +88,62 @@ export function TaskDetailModal({ task, listName, role, onClose }: Props) {
 function TaskDetailContent({
   task,
   listName,
+  listId,
   role,
+  teamNames,
 }: {
   task: Task
   listName: string
+  listId: string
   role: Role
+  teamNames: string[]
 }) {
   const canEdit = role === "editor"
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div>
-        <p className="text-xs uppercase tracking-wide text-base-content/50">
-          {listName}
-        </p>
-        <div className="flex flex-wrap items-center gap-2 mt-1">
-          <h3 className="font-bold text-xl">{task.title}</h3>
-          <span className={`badge badge-sm ${priorityBadge[task.priority]}`}>
-            {task.priority}
-          </span>
-          <span className={`badge badge-sm ${statusBadge[task.status]}`}>
-            {statusLabel[task.status]}
-          </span>
-        </div>
-      </div>
+      <p className="text-xs uppercase tracking-wide text-base-content/50">
+        {listName}
+      </p>
 
-      {task.description && (
-        <p className="text-sm text-base-content/70">{task.description}</p>
+      {canEdit ? (
+        <TaskEditForm task={task} listId={listId} teamNames={teamNames} />
+      ) : (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-bold text-xl">{task.title}</h3>
+            <span className={`badge badge-sm ${priorityBadge[task.priority]}`}>
+              {task.priority}
+            </span>
+            <span className={`badge badge-sm ${statusBadge[task.status]}`}>
+              {statusLabel[task.status]}
+            </span>
+          </div>
+
+          {task.description && (
+            <p className="text-sm text-base-content/70">{task.description}</p>
+          )}
+
+          {/* Meta */}
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-base-content/60">
+            {task.assignees.length > 0 && (
+              <span className="font-medium">{task.assignees.join(", ")}</span>
+            )}
+            {task.storyPoints != null && <span>{task.storyPoints} pts</span>}
+            {task.dueDate && (
+              <span>
+                Due:{" "}
+                {new Date(task.dueDate + "T00:00:00").toLocaleDateString()}
+              </span>
+            )}
+            {task.tags.map((tag) => (
+              <span key={tag} className="badge badge-sm badge-outline">
+                {tag}
+              </span>
+            ))}
+          </div>
+        </>
       )}
-
-      {/* Meta */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-base-content/60">
-        {task.assignees.length > 0 && (
-          <span className="font-medium">{task.assignees.join(", ")}</span>
-        )}
-        {task.storyPoints != null && <span>{task.storyPoints} pts</span>}
-        {task.dueDate && (
-          <span>
-            Due: {new Date(task.dueDate + "T00:00:00").toLocaleDateString()}
-          </span>
-        )}
-        {task.tags.map((tag) => (
-          <span key={tag} className="badge badge-sm badge-outline">
-            {tag}
-          </span>
-        ))}
-      </div>
 
       <div className="divider my-1" />
 
@@ -124,6 +152,37 @@ function TaskDetailContent({
       <div className="divider my-1" />
 
       <NotesSection task={task} canEdit={canEdit} />
+    </div>
+  )
+}
+
+function TaskEditForm({
+  task,
+  listId,
+  teamNames,
+}: {
+  task: Task
+  listId: string
+  teamNames: string[]
+}) {
+  return (
+    <div className="space-y-4">
+      <form action={updateTaskAction} className="space-y-4">
+        <input type="hidden" name="taskListId" value={listId} />
+        <input type="hidden" name="taskId" value={task.id} />
+        <TaskFields task={task} team={teamNames} />
+        <SubmitButton className="btn btn-primary btn-sm">
+          Save task
+        </SubmitButton>
+      </form>
+      <form action={deleteTaskAction}>
+        <input type="hidden" name="taskListId" value={listId} />
+        <input type="hidden" name="taskId" value={task.id} />
+        <button type="submit" className="btn btn-error btn-sm btn-soft">
+          <IoTrashOutline />
+          Delete task
+        </button>
+      </form>
     </div>
   )
 }

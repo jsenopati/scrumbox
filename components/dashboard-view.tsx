@@ -12,6 +12,7 @@ import { calculateProgress, calculateStoryPoints } from "@/lib/metrics"
 import type { ProjectData } from "@/lib/data"
 import type { Role } from "@/lib/session"
 import { TaskDetailModal } from "./task-detail-modal"
+import { ListAdminControls } from "./list-admin-controls"
 
 const statusBadge: Record<string, string> = {
   completed: "badge-success",
@@ -36,6 +37,7 @@ const priorityLabel: Record<string, string> = {
 interface Props {
   data: ProjectData
   role: Role
+  teamNames: string[]
   anyStoryPoints: boolean
   allStoryPoints: { total: number; completed: number }
   storyPointPct: number
@@ -48,6 +50,7 @@ interface Props {
 export function DashboardView({
   data,
   role,
+  teamNames,
   anyStoryPoints,
   allStoryPoints,
   storyPointPct,
@@ -59,16 +62,19 @@ export function DashboardView({
   const [archiveOpen, setArchiveOpen] = useState(false)
   const [simple, setSimple] = useState(true)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const canEdit = role === "editor"
 
   // Derive the live task + its list from data so the modal reflects edits.
   let selectedTask: ProjectData["taskLists"][number]["tasks"][number] | null =
     null
   let selectedListName = ""
+  let selectedListId = ""
   for (const list of data.taskLists) {
     const found = list.tasks.find((t) => t.id === selectedTaskId)
     if (found) {
       selectedTask = found
       selectedListName = list.name
+      selectedListId = list.id
       break
     }
   }
@@ -127,9 +133,14 @@ export function DashboardView({
       )}
 
       {simple ? (
-        <SimpleView data={data} onSelectTask={setSelectedTaskId} />
+        <SimpleView
+          data={data}
+          canEdit={canEdit}
+          teamNames={teamNames}
+          onSelectTask={setSelectedTaskId}
+        />
       ) : (
-        <DetailedView data={data} />
+        <DetailedView data={data} canEdit={canEdit} teamNames={teamNames} />
       )}
 
       {data.archivedTaskLists.length > 0 && (
@@ -184,7 +195,9 @@ export function DashboardView({
       <TaskDetailModal
         task={selectedTask}
         listName={selectedListName}
+        listId={selectedListId}
         role={role}
+        teamNames={teamNames}
         onClose={() => setSelectedTaskId(null)}
       />
     </>
@@ -219,9 +232,13 @@ function SectionHeader({
 
 function SimpleView({
   data,
+  canEdit,
+  teamNames,
   onSelectTask,
 }: {
   data: ProjectData
+  canEdit: boolean
+  teamNames: string[]
   onSelectTask: (taskId: string) => void
 }) {
   const focus = data.taskLists.filter((tl) => tl.section === "focus")
@@ -239,6 +256,8 @@ function SimpleView({
               <SimpleTaskListCard
                 key={taskList.id}
                 taskList={taskList}
+                canEdit={canEdit}
+                teamNames={teamNames}
                 onSelectTask={onSelectTask}
               />
             ))}
@@ -253,6 +272,8 @@ function SimpleView({
               <SimpleTaskListCard
                 key={taskList.id}
                 taskList={taskList}
+                canEdit={canEdit}
+                teamNames={teamNames}
                 onSelectTask={onSelectTask}
               />
             ))}
@@ -267,6 +288,8 @@ function SimpleView({
               <SimpleTaskListCard
                 key={taskList.id}
                 taskList={taskList}
+                canEdit={canEdit}
+                teamNames={teamNames}
                 onSelectTask={onSelectTask}
               />
             ))}
@@ -281,6 +304,8 @@ function SimpleView({
               <SimpleTaskListCard
                 key={taskList.id}
                 taskList={taskList}
+                canEdit={canEdit}
+                teamNames={teamNames}
                 onSelectTask={onSelectTask}
               />
             ))}
@@ -319,9 +344,13 @@ function FlowArrow() {
 
 function SimpleTaskListCard({
   taskList,
+  canEdit,
+  teamNames,
   onSelectTask,
 }: {
   taskList: ProjectData["taskLists"][number]
+  canEdit: boolean
+  teamNames: string[]
   onSelectTask: (taskId: string) => void
 }) {
   const progress = calculateProgress(taskList.tasks)
@@ -355,6 +384,10 @@ function SimpleTaskListCard({
             <span className="font-semibold text-base-content">{progress}%</span>
           </div>
         </div>
+
+        {canEdit && (
+          <ListAdminControls taskList={taskList} teamNames={teamNames} />
+        )}
 
         <progress
           className="progress progress-primary w-full h-1.5"
@@ -442,7 +475,15 @@ function SimpleTaskListCard({
 // Detailed view
 // ---------------------------------------------------------------------------
 
-function DetailedView({ data }: { data: ProjectData }) {
+function DetailedView({
+  data,
+  canEdit,
+  teamNames,
+}: {
+  data: ProjectData
+  canEdit: boolean
+  teamNames: string[]
+}) {
   const focus = data.taskLists.filter((tl) => tl.section === "focus")
   const upnext = data.taskLists.filter((tl) => tl.section === "upnext")
   const concurrent = data.taskLists.filter((tl) => tl.section === "concurrent")
@@ -455,7 +496,12 @@ function DetailedView({ data }: { data: ProjectData }) {
           <SectionHeader title="Currently working on" />
           <div className="space-y-6">
             {focus.map((taskList) => (
-              <DetailedTaskListCard key={taskList.id} taskList={taskList} />
+              <DetailedTaskListCard
+                key={taskList.id}
+                taskList={taskList}
+                canEdit={canEdit}
+                teamNames={teamNames}
+              />
             ))}
           </div>
         </div>
@@ -465,7 +511,12 @@ function DetailedView({ data }: { data: ProjectData }) {
           <SectionHeader title="Up next" />
           <div className="space-y-6">
             {upnext.map((taskList) => (
-              <DetailedTaskListCard key={taskList.id} taskList={taskList} />
+              <DetailedTaskListCard
+                key={taskList.id}
+                taskList={taskList}
+                canEdit={canEdit}
+                teamNames={teamNames}
+              />
             ))}
           </div>
         </div>
@@ -475,7 +526,12 @@ function DetailedView({ data }: { data: ProjectData }) {
           <SectionHeader title="Concurrent Tasks" subtitle="dynamic priority" />
           <div className="space-y-6">
             {concurrent.map((taskList) => (
-              <DetailedTaskListCard key={taskList.id} taskList={taskList} />
+              <DetailedTaskListCard
+                key={taskList.id}
+                taskList={taskList}
+                canEdit={canEdit}
+                teamNames={teamNames}
+              />
             ))}
           </div>
         </div>
@@ -485,7 +541,12 @@ function DetailedView({ data }: { data: ProjectData }) {
           <SectionHeader title="Backlog" />
           <div className="space-y-6 opacity-80">
             {backlog.map((taskList) => (
-              <DetailedTaskListCard key={taskList.id} taskList={taskList} />
+              <DetailedTaskListCard
+                key={taskList.id}
+                taskList={taskList}
+                canEdit={canEdit}
+                teamNames={teamNames}
+              />
             ))}
           </div>
         </div>
@@ -536,8 +597,12 @@ function DetailedView({ data }: { data: ProjectData }) {
 
 function DetailedTaskListCard({
   taskList,
+  canEdit,
+  teamNames,
 }: {
   taskList: ProjectData["taskLists"][number]
+  canEdit: boolean
+  teamNames: string[]
 }) {
   const progress = calculateProgress(taskList.tasks)
   const storyPoints = calculateStoryPoints(taskList.tasks)
@@ -578,6 +643,15 @@ function DetailedTaskListCard({
           value={progress}
           max={100}
         />
+        {canEdit && (
+          <div className="mt-4">
+            <ListAdminControls
+              taskList={taskList}
+              teamNames={teamNames}
+              variant="dark"
+            />
+          </div>
+        )}
       </div>
 
       {/* Task flow — vertical, full-width */}

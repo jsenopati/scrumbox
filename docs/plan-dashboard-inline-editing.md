@@ -1,6 +1,6 @@
 # Plan: Fold `/manage` CRUD into the dashboard (inline, editor-gated)
 
-Status: in progress. Commits 1–4 done. Pick up at commit 5.
+Status: in progress. Commits 1–6 done. Pick up at commit 7.
 
 ## Vision (locked)
 
@@ -59,13 +59,15 @@ alive until the final commit so nothing breaks mid-stream.
    `reorderTaskListsAction` / `reorderTasksAction` in `lib/actions.ts`. Additive, not wired to UI.
 4. **`refactor(ui): extract shared TaskFields / TaskListFields`** — ✅ **DONE**
    Moved them into `components/task-fields.tsx`; manage page imports them.
-5. **`feat(dashboard): editable task fields in the detail modal`**
-   In `components/task-detail-modal.tsx`, render `TaskFields` inside a
-   `<form action={updateTaskAction}>` with a Save button + delete-task button
-   when `canEdit`; read-only otherwise. Thread `teamNames`
+5. **`feat(dashboard): editable task fields in the detail modal`** — ✅ **DONE**
+   In `components/task-detail-modal.tsx`, editors get `TaskFields` inside a
+   `<form action={updateTaskAction}>` with a Save button + delete-task button;
+   read-only otherwise. Threaded `teamNames` + `listId`
    `dashboard/page.tsx` → `DashboardView` → modal.
-6. **`feat(dashboard): inline task-list editing on cards`**
-   Editor-only edit-details / add-task / archive affordances on list cards.
+6. **`feat(dashboard): inline task-list editing on cards`** — ✅ **DONE**
+   New `components/list-admin-controls.tsx` (edit-details / add-task dialogs +
+   archive) rendered on Simple and Detailed list cards for editors. Threaded
+   `canEdit` + `teamNames` into both card components.
 7. **`feat(dashboard): admin-only Team Members & New Task List sections`**
    Lifted from the manage page, rendered when `canEdit`.
 8. **`feat(dashboard): drag-and-drop reordering`** (split in two)
