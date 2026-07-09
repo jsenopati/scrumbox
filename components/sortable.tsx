@@ -14,18 +14,21 @@ import {
   dropTargetForElements,
   monitorForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
+import { disableNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/disable-native-drag-preview"
 import {
   attachClosestEdge,
   extractClosestEdge,
   type Edge,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge"
+import { IoReorderTwoOutline } from "react-icons/io5"
 
 // ---------------------------------------------------------------------------
 // A minimal reorderable list built on Pragmatic drag-and-drop.
 //
 // Wrap a group of siblings in <SortableGroup> and each sibling in
-// <SortableItem>. On drop the group calls `onReorder` with the full list of
-// item ids in their new order.
+// <SortableItem>. Each item exposes a grab handle in a left gutter; dragging
+// it and dropping on a sibling calls the group's `onReorder` with the full
+// list of item ids in their new order.
 // ---------------------------------------------------------------------------
 
 type GroupContextValue = {
@@ -104,7 +107,7 @@ function DropIndicator({ edge }: { edge: Edge }) {
   }
   return (
     <div
-      className={`pointer-events-none absolute z-10 rounded bg-primary ${position[edge]}`}
+      className={`pointer-events-none absolute z-20 rounded bg-primary ${position[edge]}`}
     />
   )
 }
@@ -121,13 +124,15 @@ export function SortableItem({
   children: ReactNode
 }) {
   const ctx = useContext(GroupContext)
-  const ref = useRef<HTMLDivElement>(null)
+  const itemRef = useRef<HTMLDivElement>(null)
+  const handleRef = useRef<HTMLButtonElement>(null)
   const [dragging, setDragging] = useState(false)
   const [edge, setEdge] = useState<Edge | null>(null)
 
   useEffect(() => {
-    const el = ref.current
-    if (!el || !ctx) return
+    const el = itemRef.current
+    const handle = handleRef.current
+    if (!el || !handle || !ctx) return
     const { instanceId } = ctx
     const allowedEdges: Edge[] =
       orientation === "vertical" ? ["top", "bottom"] : ["left", "right"]
@@ -135,7 +140,13 @@ export function SortableItem({
     return combine(
       draggable({
         element: el,
+        dragHandle: handle,
         getInitialData: () => ({ instanceId, id }),
+        // Suppress the browser's default full-element drag image (the
+        // "onion-skin" ghost); we dim the source + show a drop indicator
+        // instead.
+        onGenerateDragPreview: ({ nativeSetDragImage }) =>
+          disableNativeDragPreview({ nativeSetDragImage }),
         onDragStart: () => setDragging(true),
         onDrop: () => setDragging(false),
       }),
@@ -157,9 +168,18 @@ export function SortableItem({
 
   return (
     <div
-      ref={ref}
-      className={`relative ${dragging ? "opacity-40" : ""} ${className ?? ""}`}
+      ref={itemRef}
+      className={`relative pl-7 ${dragging ? "opacity-40" : ""} ${className ?? ""}`}
     >
+      <button
+        ref={handleRef}
+        type="button"
+        aria-label="Drag to reorder"
+        title="Drag to reorder"
+        className="absolute left-0 top-3 z-20 flex h-6 w-6 cursor-grab touch-none items-center justify-center rounded-md border border-base-300 bg-base-100 text-base-content/50 shadow-sm hover:bg-base-200 hover:text-base-content active:cursor-grabbing"
+      >
+        <IoReorderTwoOutline size={16} />
+      </button>
       {children}
       {edge && <DropIndicator edge={edge} />}
     </div>
