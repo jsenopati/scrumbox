@@ -17,8 +17,8 @@ import {
   deleteChecklistItem,
   addTeamMember,
   deleteTeamMember,
-  reorderTaskList,
-  reorderTask,
+  setTaskListOrder,
+  setTaskOrder,
   type Task,
 } from "@/lib/data"
 
@@ -108,7 +108,6 @@ export async function createTaskListAction(formData: FormData) {
     sortOrder: 0,
   })
 
-  revalidatePath("/manage")
   revalidatePath("/dashboard")
 }
 
@@ -127,7 +126,6 @@ export async function updateTaskListAction(formData: FormData) {
     section: parseSection(formData),
   })
 
-  revalidatePath("/manage")
   revalidatePath("/dashboard")
 }
 
@@ -139,7 +137,6 @@ export async function deleteTaskListAction(formData: FormData) {
 
   await deleteTaskList(id)
 
-  revalidatePath("/manage")
   revalidatePath("/dashboard")
 }
 
@@ -151,7 +148,6 @@ export async function archiveTaskListAction(formData: FormData) {
 
   await archiveTaskList(id)
 
-  revalidatePath("/manage")
   revalidatePath("/dashboard")
 }
 
@@ -163,7 +159,6 @@ export async function unarchiveTaskListAction(formData: FormData) {
 
   await unarchiveTaskList(id)
 
-  revalidatePath("/manage")
   revalidatePath("/dashboard")
 }
 
@@ -196,7 +191,6 @@ export async function createTaskAction(formData: FormData) {
     await addChecklistItem(created.id, content)
   }
 
-  revalidatePath("/manage")
   revalidatePath("/dashboard")
 }
 
@@ -221,7 +215,6 @@ export async function updateTaskAction(formData: FormData) {
     sortOrder: parseSortOrder(formData),
   })
 
-  revalidatePath("/manage")
   revalidatePath("/dashboard")
 }
 
@@ -236,7 +229,6 @@ export async function deleteTaskAction(formData: FormData) {
 
   await deleteTask(taskListId, taskId)
 
-  revalidatePath("/manage")
   revalidatePath("/dashboard")
 }
 
@@ -246,7 +238,6 @@ export async function updateTaskNotesAction(taskId: string, notes: string) {
   await requireRole("editor")
   if (!taskId) throw new Error("Task id is required")
   await updateTaskNotes(taskId, notes)
-  revalidatePath("/manage")
   revalidatePath("/dashboard")
 }
 
@@ -256,7 +247,6 @@ export async function addChecklistItemAction(taskId: string, content: string) {
   const trimmed = content.trim()
   if (!trimmed) throw new Error("Checklist item text is required")
   await addChecklistItem(taskId, trimmed)
-  revalidatePath("/manage")
   revalidatePath("/dashboard")
 }
 
@@ -267,7 +257,6 @@ export async function toggleChecklistItemAction(
   await requireRole("editor")
   if (!itemId) throw new Error("Checklist item id is required")
   await setChecklistItemChecked(itemId, checked)
-  revalidatePath("/manage")
   revalidatePath("/dashboard")
 }
 
@@ -275,7 +264,6 @@ export async function deleteChecklistItemAction(itemId: string) {
   await requireRole("editor")
   if (!itemId) throw new Error("Checklist item id is required")
   await deleteChecklistItem(itemId)
-  revalidatePath("/manage")
   revalidatePath("/dashboard")
 }
 
@@ -289,7 +277,7 @@ export async function addTeamMemberAction(formData: FormData) {
 
   await addTeamMember(name)
 
-  revalidatePath("/manage")
+  revalidatePath("/dashboard")
 }
 
 export async function deleteTeamMemberAction(formData: FormData) {
@@ -300,47 +288,27 @@ export async function deleteTeamMemberAction(formData: FormData) {
 
   await deleteTeamMember(id)
 
-  revalidatePath("/manage")
-}
-
-// --- reorder actions --------------------------------------------------------
-
-export async function moveTaskListUpAction(formData: FormData) {
-  await requireRole("editor")
-  const id = str(formData, "id")
-  if (!id) throw new Error("Task list id is required")
-  await reorderTaskList(id, "up")
-  revalidatePath("/manage")
   revalidatePath("/dashboard")
 }
 
-export async function moveTaskListDownAction(formData: FormData) {
+// --- reorder actions (removed) ---------------------------------------------
+
+// --- drag and drop reorder (index-based) ------------------------------------
+
+export async function reorderTaskListsAction(orderedIds: string[]) {
   await requireRole("editor")
-  const id = str(formData, "id")
-  if (!id) throw new Error("Task list id is required")
-  await reorderTaskList(id, "down")
-  revalidatePath("/manage")
+  if (!Array.isArray(orderedIds) || orderedIds.length === 0) return
+  await setTaskListOrder(orderedIds)
   revalidatePath("/dashboard")
 }
 
-export async function moveTaskUpAction(formData: FormData) {
+export async function reorderTasksAction(
+  taskListId: string,
+  orderedIds: string[],
+) {
   await requireRole("editor")
-  const taskListId = str(formData, "taskListId")
-  const taskId = str(formData, "taskId")
-  if (!taskListId || !taskId)
-    throw new Error("Task list id and task id are required")
-  await reorderTask(taskListId, taskId, "up")
-  revalidatePath("/manage")
-  revalidatePath("/dashboard")
-}
-
-export async function moveTaskDownAction(formData: FormData) {
-  await requireRole("editor")
-  const taskListId = str(formData, "taskListId")
-  const taskId = str(formData, "taskId")
-  if (!taskListId || !taskId)
-    throw new Error("Task list id and task id are required")
-  await reorderTask(taskListId, taskId, "down")
-  revalidatePath("/manage")
+  if (!taskListId) throw new Error("Task list id is required")
+  if (!Array.isArray(orderedIds) || orderedIds.length === 0) return
+  await setTaskOrder(taskListId, orderedIds)
   revalidatePath("/dashboard")
 }

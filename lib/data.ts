@@ -446,76 +446,48 @@ export async function deleteTeamMember(id: string): Promise<void> {
   if (error) throw new Error(error.message)
 }
 
-// --- reorder task lists -----------------------------------------------------
+// --- bulk reorder (index-based, for drag and drop) -------------------------
 
-export async function reorderTaskList(
-  id: string,
-  direction: "up" | "down",
-): Promise<void> {
-  const { data, error } = await supabase
-    .from("task_lists")
-    .select("id, sort_order")
-    .is("archived_at", null)
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: true })
-  if (error) throw new Error(error.message)
-
-  const rows = data as { id: string; sort_order: number }[]
-  const idx = rows.findIndex((r) => r.id === id)
-  if (idx === -1) return
-  const swapIdx = direction === "up" ? idx - 1 : idx + 1
-  if (swapIdx < 0 || swapIdx >= rows.length) return
-
-  const a = rows[idx]
-  const b = rows[swapIdx]
-
-  // Swap sort_order values
-  const { error: e1 } = await supabase
-    .from("task_lists")
-    .update({ sort_order: b.sort_order })
-    .eq("id", a.id)
-  if (e1) throw new Error(e1.message)
-  const { error: e2 } = await supabase
-    .from("task_lists")
-    .update({ sort_order: a.sort_order })
-    .eq("id", b.id)
-  if (e2) throw new Error(e2.message)
+/**
+ * Rewrites sort_order for the given task lists to match the order of
+ * `orderedIds`. Pass the full set of ids whose relative order should be
+ * applied (e.g. all active lists in their new display order).
+ */
+export async function setTaskListOrder(orderedIds: string[]): Promise<void> {
+  const results = await Promise.all(
+    orderedIds.map((id, index) =>
+      supabase
+        .from("task_lists")
+        .update({ sort_order: (index + 1) * 10 })
+        .eq("id", id),
+    ),
+  )
+  for (const { error } of results) {
+    if (error) throw new Error(error.message)
+  }
 }
 
-// --- reorder tasks ----------------------------------------------------------
-
-export async function reorderTask(
+/**
+ * Rewrites sort_order for tasks within a list to match `orderedIds`. Note this
+ * linearises the flow "step" (each task gets a distinct sort_order); concurrent
+ * grouping is set separately via the task's Step field.
+ */
+export async function setTaskOrder(
   taskListId: string,
-  taskId: string,
-  direction: "up" | "down",
+  orderedIds: string[],
 ): Promise<void> {
-  const { data, error } = await supabase
-    .from("tasks")
-    .select("id, sort_order")
-    .eq("task_list_id", taskListId)
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: true })
-  if (error) throw new Error(error.message)
-
-  const rows = data as { id: string; sort_order: number }[]
-  const idx = rows.findIndex((r) => r.id === taskId)
-  if (idx === -1) return
-  const swapIdx = direction === "up" ? idx - 1 : idx + 1
-  if (swapIdx < 0 || swapIdx >= rows.length) return
-
-  const a = rows[idx]
-  const b = rows[swapIdx]
-
-  const { error: e1 } = await supabase
-    .from("tasks")
-    .update({ sort_order: b.sort_order })
-    .eq("id", a.id)
-  if (e1) throw new Error(e1.message)
-  const { error: e2 } = await supabase
-    .from("tasks")
-    .update({ sort_order: a.sort_order })
-    .eq("id", b.id)
-  if (e2) throw new Error(e2.message)
+  const results = await Promise.all(
+    orderedIds.map((id, index) =>
+      supabase
+        .from("tasks")
+        .update({ sort_order: (index + 1) * 10 })
+        .eq("id", id)
+        .eq("task_list_id", taskListId),
+    ),
+  )
+  for (const { error } of results) {
+    if (error) throw new Error(error.message)
+  }
 }
 
 // --- computed metrics -------------------------------------------------------

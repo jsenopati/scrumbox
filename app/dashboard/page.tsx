@@ -1,4 +1,4 @@
-import { getProjectData, calculateStoryPoints } from "@/lib/data"
+import { getProjectData, getTeamMembers, calculateStoryPoints } from "@/lib/data"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardView } from "@/components/dashboard-view"
 import { requireRole } from "@/lib/session"
@@ -7,7 +7,11 @@ export const dynamic = "force-dynamic"
 
 export default async function DashboardPage() {
   const role = await requireRole("viewer")
-  const data = await getProjectData()
+  const [data, teamMembers] = await Promise.all([
+    getProjectData(),
+    getTeamMembers(),
+  ])
+  const teamNames = teamMembers.map((m) => m.name)
 
   const totalTasks = data.taskLists.reduce(
     (sum, tl) => sum + tl.tasks.length,
@@ -39,10 +43,12 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-base-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <DashboardHeader lastUpdated={data.lastUpdated} role={role} />
+        <DashboardHeader lastUpdated={data.lastUpdated} />
         <DashboardView
           data={data}
           role={role}
+          teamNames={teamNames}
+          teamMembers={teamMembers}
           anyStoryPoints={anyStoryPoints}
           allStoryPoints={allStoryPoints}
           storyPointPct={storyPointPct}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import {
   IoArrowForward,
   IoArrowDown,
@@ -9,9 +9,13 @@ import {
   IoDocumentTextOutline,
 } from "react-icons/io5"
 import { calculateProgress, calculateStoryPoints } from "@/lib/metrics"
-import type { ProjectData } from "@/lib/data"
+import type { ProjectData, TeamMember } from "@/lib/data"
 import type { Role } from "@/lib/session"
+import { reorderTaskListsAction, reorderTasksAction } from "@/lib/actions"
 import { TaskDetailModal } from "./task-detail-modal"
+import { ListAdminControls } from "./list-admin-controls"
+import { DashboardAdminTools } from "./dashboard-admin-tools"
+import { SortableGroup, SortableItem, MaybeSortableGroup, MaybeSortableItem } from "./sortable"
 
 const statusBadge: Record<string, string> = {
   completed: "badge-success",
@@ -36,6 +40,8 @@ const priorityLabel: Record<string, string> = {
 interface Props {
   data: ProjectData
   role: Role
+  teamNames: string[]
+  teamMembers: TeamMember[]
   anyStoryPoints: boolean
   allStoryPoints: { total: number; completed: number }
   storyPointPct: number
@@ -48,6 +54,8 @@ interface Props {
 export function DashboardView({
   data,
   role,
+  teamNames,
+  teamMembers,
   anyStoryPoints,
   allStoryPoints,
   storyPointPct,
@@ -59,16 +67,19 @@ export function DashboardView({
   const [archiveOpen, setArchiveOpen] = useState(false)
   const [simple, setSimple] = useState(true)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const canEdit = role === "editor"
 
   // Derive the live task + its list from data so the modal reflects edits.
   let selectedTask: ProjectData["taskLists"][number]["tasks"][number] | null =
     null
   let selectedListName = ""
+  let selectedListId = ""
   for (const list of data.taskLists) {
     const found = list.tasks.find((t) => t.id === selectedTaskId)
     if (found) {
       selectedTask = found
       selectedListName = list.name
+      selectedListId = list.id
       break
     }
   }
@@ -118,6 +129,8 @@ export function DashboardView({
         </div>
       </div>
 
+      {canEdit && <DashboardAdminTools teamMembers={teamMembers} />}
+
       {data.taskLists.length === 0 && (
         <div className="card bg-base-100 shadow">
           <div className="card-body items-center text-center text-base-content/60">
@@ -127,9 +140,14 @@ export function DashboardView({
       )}
 
       {simple ? (
-        <SimpleView data={data} onSelectTask={setSelectedTaskId} />
+        <SimpleView
+          data={data}
+          canEdit={canEdit}
+          teamNames={teamNames}
+          onSelectTask={setSelectedTaskId}
+        />
       ) : (
-        <DetailedView data={data} />
+        <DetailedView data={data} canEdit={canEdit} teamNames={teamNames} />
       )}
 
       {data.archivedTaskLists.length > 0 && (
@@ -184,7 +202,9 @@ export function DashboardView({
       <TaskDetailModal
         task={selectedTask}
         listName={selectedListName}
+        listId={selectedListId}
         role={role}
+        teamNames={teamNames}
         onClose={() => setSelectedTaskId(null)}
       />
     </>
@@ -213,79 +233,149 @@ function SectionHeader({
   )
 }
 
+// Rebuild the full global task-list ordering after reordering one section.
+// Non-section lists keep their exact global slots; the section's slots are
+// filled with the new intra-section order.
+function reorderSectionInGlobal(
+  all: ProjectData["taskLists"],
+  section: ProjectData["taskLists"][number]["section"],
+  newSectionOrder: string[],
+): string[] {
+  const queue = [...newSectionOrder]
+  return all.map((tl) => (tl.section === section ? queue.shift()! : tl.id))
+}
+
+
 // ---------------------------------------------------------------------------
 // Simple view
 // ---------------------------------------------------------------------------
 
 function SimpleView({
   data,
+  canEdit,
+  teamNames,
   onSelectTask,
 }: {
   data: ProjectData
+  canEdit: boolean
+  teamNames: string[]
   onSelectTask: (taskId: string) => void
 }) {
+  const [, startTransition] = useTransition()
   const focus = data.taskLists.filter((tl) => tl.section === "focus")
   const upnext = data.taskLists.filter((tl) => tl.section === "upnext")
   const concurrent = data.taskLists.filter((tl) => tl.section === "concurrent")
   const backlog = data.taskLists.filter((tl) => tl.section === "backlog")
 
+  const handleReorder = (
+    section: ProjectData["taskLists"][number]["section"],
+    orderedIds: string[],
+  ) => {
+    const global = reorderSectionInGlobal(data.taskLists, section, orderedIds)
+    startTransition(async () => {
+      await reorderTaskListsAction(global)
+    })
+  }
+
   return (
     <div className="space-y-8">
-      {focus.length > 0 && (
-        <div>
-          <SectionHeader title="Currently working on" />
-          <div className="space-y-4">
-            {focus.map((taskList) => (
-              <SimpleTaskListCard
-                key={taskList.id}
-                taskList={taskList}
-                onSelectTask={onSelectTask}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-      {upnext.length > 0 && (
-        <div>
-          <SectionHeader title="Up next" />
-          <div className="space-y-4">
-            {upnext.map((taskList) => (
-              <SimpleTaskListCard
-                key={taskList.id}
-                taskList={taskList}
-                onSelectTask={onSelectTask}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-      {concurrent.length > 0 && (
-        <div>
-          <SectionHeader title="Concurrent Tasks" subtitle="dynamic priority" />
-          <div className="space-y-4">
-            {concurrent.map((taskList) => (
-              <SimpleTaskListCard
-                key={taskList.id}
-                taskList={taskList}
-                onSelectTask={onSelectTask}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-      {backlog.length > 0 && (
-        <div>
-          <SectionHeader title="Backlog" />
-          <div className="space-y-4 opacity-80">
-            {backlog.map((taskList) => (
-              <SimpleTaskListCard
-                key={taskList.id}
-                taskList={taskList}
-                onSelectTask={onSelectTask}
-              />
-            ))}
-          </div>
-        </div>
+      <SimpleSection
+        title="Currently working on"
+        lists={focus}
+        canEdit={canEdit}
+        teamNames={teamNames}
+        onReorder={handleReorder}
+        onSelectTask={onSelectTask}
+      />
+      <SimpleSection
+        title="Up next"
+        lists={upnext}
+        canEdit={canEdit}
+        teamNames={teamNames}
+        onReorder={handleReorder}
+        onSelectTask={onSelectTask}
+      />
+      <SimpleSection
+        title="Concurrent Tasks"
+        subtitle="dynamic priority"
+        lists={concurrent}
+        canEdit={canEdit}
+        teamNames={teamNames}
+        onReorder={handleReorder}
+        onSelectTask={onSelectTask}
+      />
+      <SimpleSection
+        title="Backlog"
+        lists={backlog}
+        faded
+        canEdit={canEdit}
+        teamNames={teamNames}
+        onReorder={handleReorder}
+        onSelectTask={onSelectTask}
+      />
+    </div>
+  )
+}
+
+function SimpleSection({
+  title,
+  subtitle,
+  lists,
+  faded,
+  canEdit,
+  teamNames,
+  onReorder,
+  onSelectTask,
+}: {
+  title: string
+  subtitle?: string
+  lists: ProjectData["taskLists"]
+  faded?: boolean
+  canEdit: boolean
+  teamNames: string[]
+  onReorder: (
+    section: ProjectData["taskLists"][number]["section"],
+    orderedIds: string[],
+  ) => void
+  onSelectTask: (taskId: string) => void
+}) {
+  if (lists.length === 0) return null
+  const section = lists[0].section
+
+  const cards = (
+    <div className={`space-y-4 ${faded ? "opacity-80" : ""}`}>
+      {lists.map((taskList) => {
+        const card = (
+          <SimpleTaskListCard
+            taskList={taskList}
+            canEdit={canEdit}
+            teamNames={teamNames}
+            onSelectTask={onSelectTask}
+          />
+        )
+        return canEdit ? (
+          <SortableItem key={taskList.id} id={taskList.id}>
+            {card}
+          </SortableItem>
+        ) : (
+          <div key={taskList.id}>{card}</div>
+        )
+      })}
+    </div>
+  )
+
+  return (
+    <div>
+      <SectionHeader title={title} subtitle={subtitle} />
+      {canEdit ? (
+        <SortableGroup
+          items={lists.map((l) => l.id)}
+          onReorder={(orderedIds) => onReorder(section, orderedIds)}
+        >
+          {cards}
+        </SortableGroup>
+      ) : (
+        cards
       )}
     </div>
   )
@@ -319,9 +409,13 @@ function FlowArrow() {
 
 function SimpleTaskListCard({
   taskList,
+  canEdit,
+  teamNames,
   onSelectTask,
 }: {
   taskList: ProjectData["taskLists"][number]
+  canEdit: boolean
+  teamNames: string[]
   onSelectTask: (taskId: string) => void
 }) {
   const progress = calculateProgress(taskList.tasks)
@@ -355,6 +449,10 @@ function SimpleTaskListCard({
             <span className="font-semibold text-base-content">{progress}%</span>
           </div>
         </div>
+
+        {canEdit && (
+          <ListAdminControls taskList={taskList} teamNames={teamNames} />
+        )}
 
         <progress
           className="progress progress-primary w-full h-1.5"
@@ -442,54 +540,63 @@ function SimpleTaskListCard({
 // Detailed view
 // ---------------------------------------------------------------------------
 
-function DetailedView({ data }: { data: ProjectData }) {
+function DetailedView({
+  data,
+  canEdit,
+  teamNames,
+}: {
+  data: ProjectData
+  canEdit: boolean
+  teamNames: string[]
+}) {
+  const [, startTransition] = useTransition()
   const focus = data.taskLists.filter((tl) => tl.section === "focus")
   const upnext = data.taskLists.filter((tl) => tl.section === "upnext")
   const concurrent = data.taskLists.filter((tl) => tl.section === "concurrent")
   const backlog = data.taskLists.filter((tl) => tl.section === "backlog")
 
+  const handleReorder = (
+    section: ProjectData["taskLists"][number]["section"],
+    orderedIds: string[],
+  ) => {
+    const global = reorderSectionInGlobal(data.taskLists, section, orderedIds)
+    startTransition(async () => {
+      await reorderTaskListsAction(global)
+    })
+  }
+
   return (
     <div className="space-y-10">
-      {focus.length > 0 && (
-        <div>
-          <SectionHeader title="Currently working on" />
-          <div className="space-y-6">
-            {focus.map((taskList) => (
-              <DetailedTaskListCard key={taskList.id} taskList={taskList} />
-            ))}
-          </div>
-        </div>
-      )}
-      {upnext.length > 0 && (
-        <div>
-          <SectionHeader title="Up next" />
-          <div className="space-y-6">
-            {upnext.map((taskList) => (
-              <DetailedTaskListCard key={taskList.id} taskList={taskList} />
-            ))}
-          </div>
-        </div>
-      )}
-      {concurrent.length > 0 && (
-        <div>
-          <SectionHeader title="Concurrent Tasks" subtitle="dynamic priority" />
-          <div className="space-y-6">
-            {concurrent.map((taskList) => (
-              <DetailedTaskListCard key={taskList.id} taskList={taskList} />
-            ))}
-          </div>
-        </div>
-      )}
-      {backlog.length > 0 && (
-        <div>
-          <SectionHeader title="Backlog" />
-          <div className="space-y-6 opacity-80">
-            {backlog.map((taskList) => (
-              <DetailedTaskListCard key={taskList.id} taskList={taskList} />
-            ))}
-          </div>
-        </div>
-      )}
+      <DetailedSection
+        title="Currently working on"
+        lists={focus}
+        canEdit={canEdit}
+        teamNames={teamNames}
+        onReorder={handleReorder}
+      />
+      <DetailedSection
+        title="Up next"
+        lists={upnext}
+        canEdit={canEdit}
+        teamNames={teamNames}
+        onReorder={handleReorder}
+      />
+      <DetailedSection
+        title="Concurrent Tasks"
+        subtitle="dynamic priority"
+        lists={concurrent}
+        canEdit={canEdit}
+        teamNames={teamNames}
+        onReorder={handleReorder}
+      />
+      <DetailedSection
+        title="Backlog"
+        lists={backlog}
+        faded
+        canEdit={canEdit}
+        teamNames={teamNames}
+        onReorder={handleReorder}
+      />
 
       {/* Team Section */}
       {data.team.length > 0 && (
@@ -534,14 +641,85 @@ function DetailedView({ data }: { data: ProjectData }) {
   )
 }
 
+function DetailedSection({
+  title,
+  subtitle,
+  lists,
+  faded,
+  canEdit,
+  teamNames,
+  onReorder,
+}: {
+  title: string
+  subtitle?: string
+  lists: ProjectData["taskLists"]
+  faded?: boolean
+  canEdit: boolean
+  teamNames: string[]
+  onReorder: (
+    section: ProjectData["taskLists"][number]["section"],
+    orderedIds: string[],
+  ) => void
+}) {
+  if (lists.length === 0) return null
+  const section = lists[0].section
+
+  const cards = (
+    <div className={`space-y-6 ${faded ? "opacity-80" : ""}`}>
+      {lists.map((taskList) => {
+        const card = (
+          <DetailedTaskListCard
+            taskList={taskList}
+            canEdit={canEdit}
+            teamNames={teamNames}
+          />
+        )
+        return canEdit ? (
+          <SortableItem key={taskList.id} id={taskList.id}>
+            {card}
+          </SortableItem>
+        ) : (
+          <div key={taskList.id}>{card}</div>
+        )
+      })}
+    </div>
+  )
+
+  return (
+    <div>
+      <SectionHeader title={title} subtitle={subtitle} />
+      {canEdit ? (
+        <SortableGroup
+          items={lists.map((l) => l.id)}
+          onReorder={(orderedIds) => onReorder(section, orderedIds)}
+        >
+          {cards}
+        </SortableGroup>
+      ) : (
+        cards
+      )}
+    </div>
+  )
+}
+
 function DetailedTaskListCard({
   taskList,
+  canEdit,
+  teamNames,
 }: {
   taskList: ProjectData["taskLists"][number]
+  canEdit: boolean
+  teamNames: string[]
 }) {
   const progress = calculateProgress(taskList.tasks)
   const storyPoints = calculateStoryPoints(taskList.tasks)
   const listHasStoryPoints = taskList.tasks.some((t) => t.storyPoints != null)
+  const [, startTaskTransition] = useTransition()
+  const handleTaskReorder = (orderedIds: string[]) => {
+    startTaskTransition(async () => {
+      await reorderTasksAction(taskList.id, orderedIds)
+    })
+  }
 
   return (
     <div className="card bg-base-100 shadow-md overflow-hidden">
@@ -578,6 +756,15 @@ function DetailedTaskListCard({
           value={progress}
           max={100}
         />
+        {canEdit && (
+          <div className="mt-4">
+            <ListAdminControls
+              taskList={taskList}
+              teamNames={teamNames}
+              variant="dark"
+            />
+          </div>
+        )}
       </div>
 
       {/* Task flow — vertical, full-width */}
@@ -585,13 +772,23 @@ function DetailedTaskListCard({
         {taskList.tasks.length === 0 && (
           <p className="text-base-content/60 text-sm">No tasks in this list.</p>
         )}
+        <MaybeSortableGroup
+          enabled={canEdit && taskList.tasks.length > 0}
+          items={taskList.tasks.map((t) => t.id)}
+          onReorder={handleTaskReorder}
+        >
         {groupByStep(taskList.tasks).map((step, stepIdx, steps) => (
           <div key={stepIdx}>
             {/* Concurrent tasks in this step sit side-by-side */}
             <div className="flex flex-wrap gap-3">
               {step.map((task) => (
-                <div
+                <MaybeSortableItem
                   key={task.id}
+                  enabled={canEdit}
+                  id={task.id}
+                  className={canEdit ? "flex-1 min-w-64" : undefined}
+                >
+                <div
                   className={`flex-1 min-w-64 rounded-box border p-4 transition-colors ${
                     task.status === "completed"
                       ? "border-success/30 bg-success/5 opacity-60"
@@ -649,6 +846,7 @@ function DetailedTaskListCard({
                     ))}
                   </div>
                 </div>
+                </MaybeSortableItem>
               ))}
             </div>
 
@@ -660,6 +858,7 @@ function DetailedTaskListCard({
             )}
           </div>
         ))}
+        </MaybeSortableGroup>
       </div>
     </div>
   )
