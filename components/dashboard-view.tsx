@@ -15,7 +15,12 @@ import { reorderTaskListsAction, reorderTasksAction } from "@/lib/actions"
 import { TaskDetailModal } from "./task-detail-modal"
 import { ListAdminControls } from "./list-admin-controls"
 import { DashboardAdminTools } from "./dashboard-admin-tools"
-import { SortableGroup, SortableItem, MaybeSortableItem, MaybeTaskSortableGroup } from "./sortable"
+import {
+  SortableGroup,
+  SortableItem,
+  MaybeSortableItem,
+  MaybeTaskSortableGroup,
+} from "./sortable"
 
 const statusBadge: Record<string, string> = {
   completed: "badge-success",
@@ -244,7 +249,6 @@ function reorderSectionInGlobal(
   const queue = [...newSectionOrder]
   return all.map((tl) => (tl.section === section ? queue.shift()! : tl.id))
 }
-
 
 // ---------------------------------------------------------------------------
 // Simple view
@@ -477,78 +481,81 @@ function SimpleTaskListCard({
               concurrentAxis="vertical"
               onReorder={handleTaskReorder}
             >
-            <div className="flex items-center gap-0 w-max">
-              {groupByStep(taskList.tasks).flatMap((step, stepIdx, steps) => {
-                const nodes = [
-                  <div
-                    key={`step-${stepIdx}`}
-                    className="flex flex-col gap-1.5"
-                  >
-                    {step.map((task) => (
-                      <MaybeSortableItem
-                        key={task.id}
-                        enabled={canEdit}
-                        id={task.id}
-                        orientation="free"
-                      >
-                      <button
-                        type="button"
-                        onClick={() => onSelectTask(task.id)}
-                        className={`flex flex-col gap-1 rounded-btn border px-3 py-2 w-48 text-left cursor-pointer transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                          task.status === "completed"
-                            ? "border-success/30 bg-success/5 opacity-60"
-                            : task.status === "in-progress"
-                              ? "border-warning/40 bg-warning/5"
-                              : "border-base-300 bg-base-200"
-                        }`}
-                      >
-                        <p className="text-sm font-medium leading-snug line-clamp-2">
-                          {task.title}
-                        </p>
-                        {task.assignees.length > 0 && (
-                          <p className="text-xs text-base-content/50 truncate">
-                            {task.assignees.join(", ")}
-                          </p>
-                        )}
-                        <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-                          <span
-                            className={`badge badge-xs ${priorityBadge[task.priority]}`}
+              <div className="flex items-center gap-0 w-max">
+                {groupByStep(taskList.tasks).flatMap((step, stepIdx, steps) => {
+                  const nodes = [
+                    <div
+                      key={`step-${stepIdx}`}
+                      className="flex flex-col gap-1.5"
+                    >
+                      {step.map((task) => (
+                        <MaybeSortableItem
+                          key={task.id}
+                          enabled={canEdit}
+                          id={task.id}
+                          orientation="free"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => onSelectTask(task.id)}
+                            className={`flex flex-col gap-1 rounded-btn border px-3 py-2 w-48 text-left cursor-pointer transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                              task.status === "completed"
+                                ? "border-success/30 bg-success/5 opacity-60"
+                                : task.status === "in-progress"
+                                  ? "border-warning/40 bg-warning/5"
+                                  : "border-base-300 bg-base-200"
+                            }`}
                           >
-                            {priorityLabel[task.priority]}
-                          </span>
-                          <span
-                            className={`badge badge-xs ${statusBadge[task.status]}`}
-                          >
-                            {task.status === "not-started"
-                              ? "Pending"
-                              : task.status === "in-progress"
-                                ? "Active"
-                                : "Done"}
-                          </span>
-                          {task.checklist.length > 0 && (
-                            <span className="badge badge-xs badge-ghost gap-0.5">
-                              <IoCheckmarkDoneOutline size={11} />
-                              {task.checklist.filter((i) => i.checked).length}/
-                              {task.checklist.length}
-                            </span>
-                          )}
-                          {task.notes.trim().length > 0 && (
-                            <span className="badge badge-xs badge-ghost">
-                              <IoDocumentTextOutline size={11} />
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                      </MaybeSortableItem>
-                    ))}
-                  </div>,
-                ]
-                if (stepIdx < steps.length - 1) {
-                  nodes.push(<FlowArrow key={`arrow-${stepIdx}`} />)
-                }
-                return nodes
-              })}
-            </div>
+                            <p className="text-sm font-medium leading-snug line-clamp-2">
+                              {task.title}
+                            </p>
+                            {task.assignees.length > 0 && (
+                              <p className="text-xs text-base-content/50 truncate">
+                                {task.assignees.join(", ")}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                              <span
+                                className={`badge badge-xs ${priorityBadge[task.priority]}`}
+                              >
+                                {priorityLabel[task.priority]}
+                              </span>
+                              <span
+                                className={`badge badge-xs ${statusBadge[task.status]}`}
+                              >
+                                {task.status === "not-started"
+                                  ? "Pending"
+                                  : task.status === "in-progress"
+                                    ? "Active"
+                                    : "Done"}
+                              </span>
+                              {task.checklist.length > 0 && (
+                                <span className="badge badge-xs badge-ghost gap-0.5">
+                                  <IoCheckmarkDoneOutline size={11} />
+                                  {
+                                    task.checklist.filter((i) => i.checked)
+                                      .length
+                                  }
+                                  /{task.checklist.length}
+                                </span>
+                              )}
+                              {task.notes.trim().length > 0 && (
+                                <span className="badge badge-xs badge-ghost">
+                                  <IoDocumentTextOutline size={11} />
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        </MaybeSortableItem>
+                      ))}
+                    </div>,
+                  ]
+                  if (stepIdx < steps.length - 1) {
+                    nodes.push(<FlowArrow key={`arrow-${stepIdx}`} />)
+                  }
+                  return nodes
+                })}
+              </div>
             </MaybeTaskSortableGroup>
           </div>
         )}
@@ -801,88 +808,93 @@ function DetailedTaskListCard({
           concurrentAxis="horizontal"
           onReorder={handleTaskReorder}
         >
-        {groupByStep(taskList.tasks).map((step, stepIdx, steps) => (
-          <div key={stepIdx}>
-            {/* Concurrent tasks in this step sit side-by-side */}
-            <div className="flex flex-wrap gap-3">
-              {step.map((task) => (
-                <MaybeSortableItem
-                  key={task.id}
-                  enabled={canEdit}
-                  id={task.id}
-                  orientation="free"
-                  className={canEdit ? "flex-1 min-w-64" : undefined}
-                >
-                <div
-                  className={`flex-1 min-w-64 rounded-box border p-4 transition-colors ${
-                    task.status === "completed"
-                      ? "border-success/30 bg-success/5 opacity-60"
-                      : task.status === "in-progress"
-                        ? "border-warning/40 bg-warning/5"
-                        : "border-base-300"
-                  }`}
-                >
-                  {/* Title + priority + status */}
-                  <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
-                    <div className="flex items-center flex-wrap gap-2">
-                      <h3 className="font-semibold text-base">{task.title}</h3>
-                      <span
-                        className={`badge badge-sm ${priorityBadge[task.priority]}`}
-                      >
-                        {task.priority}
-                      </span>
-                    </div>
-                    <span
-                      className={`badge shrink-0 ${statusBadge[task.status]}`}
+          {groupByStep(taskList.tasks).map((step, stepIdx, steps) => (
+            <div key={stepIdx}>
+              {/* Concurrent tasks in this step sit side-by-side */}
+              <div className="flex flex-wrap gap-3">
+                {step.map((task) => (
+                  <MaybeSortableItem
+                    key={task.id}
+                    enabled={canEdit}
+                    id={task.id}
+                    orientation="free"
+                    className={canEdit ? "flex-1 min-w-64" : undefined}
+                  >
+                    <div
+                      className={`flex-1 min-w-64 rounded-box border p-4 transition-colors ${
+                        task.status === "completed"
+                          ? "border-success/30 bg-success/5 opacity-60"
+                          : task.status === "in-progress"
+                            ? "border-warning/40 bg-warning/5"
+                            : "border-base-300"
+                      }`}
                     >
-                      {task.status.replace("-", " ")}
-                    </span>
-                  </div>
+                      {/* Title + priority + status */}
+                      <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+                        <div className="flex items-center flex-wrap gap-2">
+                          <h3 className="font-semibold text-base">
+                            {task.title}
+                          </h3>
+                          <span
+                            className={`badge badge-sm ${priorityBadge[task.priority]}`}
+                          >
+                            {task.priority}
+                          </span>
+                        </div>
+                        <span
+                          className={`badge shrink-0 ${statusBadge[task.status]}`}
+                        >
+                          {task.status.replace("-", " ")}
+                        </span>
+                      </div>
 
-                  {/* Full description — no truncation */}
-                  {task.description && (
-                    <p className="text-base-content/70 text-sm mb-3">
-                      {task.description}
-                    </p>
-                  )}
+                      {/* Full description — no truncation */}
+                      {task.description && (
+                        <p className="text-base-content/70 text-sm mb-3">
+                          {task.description}
+                        </p>
+                      )}
 
-                  {/* Meta row */}
-                  <div className="flex flex-wrap gap-x-3 gap-y-1 items-center text-sm text-base-content/60">
-                    {task.assignees.length > 0 && (
-                      <span className="font-medium">
-                        {task.assignees.join(", ")}
-                      </span>
-                    )}
-                    {task.storyPoints != null && (
-                      <span>{task.storyPoints} pts</span>
-                    )}
-                    {task.dueDate && (
-                      <span>
-                        Due:{" "}
-                        {new Date(
-                          task.dueDate + "T00:00:00",
-                        ).toLocaleDateString()}
-                      </span>
-                    )}
-                    {task.tags.map((tag) => (
-                      <span key={tag} className="badge badge-sm badge-outline">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                </MaybeSortableItem>
-              ))}
-            </div>
-
-            {/* Down-arrow between steps */}
-            {stepIdx < steps.length - 1 && (
-              <div className="flex justify-center py-1 text-base-content/30">
-                <IoArrowDown size={16} />
+                      {/* Meta row */}
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 items-center text-sm text-base-content/60">
+                        {task.assignees.length > 0 && (
+                          <span className="font-medium">
+                            {task.assignees.join(", ")}
+                          </span>
+                        )}
+                        {task.storyPoints != null && (
+                          <span>{task.storyPoints} pts</span>
+                        )}
+                        {task.dueDate && (
+                          <span>
+                            Due:{" "}
+                            {new Date(
+                              task.dueDate + "T00:00:00",
+                            ).toLocaleDateString()}
+                          </span>
+                        )}
+                        {task.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="badge badge-sm badge-outline"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </MaybeSortableItem>
+                ))}
               </div>
-            )}
-          </div>
-        ))}
+
+              {/* Down-arrow between steps */}
+              {stepIdx < steps.length - 1 && (
+                <div className="flex justify-center py-1 text-base-content/30">
+                  <IoArrowDown size={16} />
+                </div>
+              )}
+            </div>
+          ))}
         </MaybeTaskSortableGroup>
       </div>
     </div>
