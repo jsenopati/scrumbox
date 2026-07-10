@@ -27,8 +27,8 @@ import { IoReorderTwoOutline } from "react-icons/io5"
 //
 // Wrap a group of siblings in <SortableGroup> and each sibling in
 // <SortableItem>. Each item exposes a grab handle in a left gutter; dragging
-// it and dropping on a sibling calls the group's `onReorder` with the full
-// list of item ids in their new order.
+// it and dropping on a sibling calls the group's `onReorderAction` with the
+// full list of item ids in their new order.
 // ---------------------------------------------------------------------------
 
 type GroupContextValue = {
@@ -121,11 +121,11 @@ function computeStepReorder(
 
 export function SortableGroup({
   items,
-  onReorder,
+  onReorderAction,
   children,
 }: {
   items: string[]
-  onReorder: (orderedIds: string[]) => void
+  onReorderAction: (orderedIds: string[]) => void
   children: ReactNode
 }) {
   const instanceRef = useRef<symbol | null>(null)
@@ -134,8 +134,8 @@ export function SortableGroup({
 
   const itemsRef = useRef(items)
   itemsRef.current = items
-  const onReorderRef = useRef(onReorder)
-  onReorderRef.current = onReorder
+  const onReorderRef = useRef(onReorderAction)
+  onReorderRef.current = onReorderAction
 
   useEffect(() => {
     return monitorForElements({
@@ -169,12 +169,12 @@ export function SortableGroup({
 export function TaskSortableGroup({
   steps,
   concurrentAxis,
-  onReorder,
+  onReorderAction,
   children,
 }: {
   steps: string[][]
   concurrentAxis: ConcurrentAxis
-  onReorder: (steps: string[][]) => void
+  onReorderAction: (steps: string[][]) => void
   children: ReactNode
 }) {
   const instanceRef = useRef<symbol | null>(null)
@@ -184,8 +184,8 @@ export function TaskSortableGroup({
 
   const stepsRef = useRef(steps)
   stepsRef.current = steps
-  const onReorderRef = useRef(onReorder)
-  onReorderRef.current = onReorder
+  const onReorderRef = useRef(onReorderAction)
+  onReorderRef.current = onReorderAction
   const axisRef = useRef(concurrentAxis)
   axisRef.current = concurrentAxis
 
@@ -315,17 +315,17 @@ export function SortableItem({
 export function MaybeSortableGroup({
   enabled,
   items,
-  onReorder,
+  onReorderAction,
   children,
 }: {
   enabled: boolean
   items: string[]
-  onReorder: (orderedIds: string[]) => void
+  onReorderAction: (orderedIds: string[]) => void
   children: ReactNode
 }) {
   if (!enabled) return <>{children}</>
   return (
-    <SortableGroup items={items} onReorder={onReorder}>
+    <SortableGroup items={items} onReorderAction={onReorderAction}>
       {children}
     </SortableGroup>
   )
@@ -356,13 +356,13 @@ export function MaybeTaskSortableGroup({
   enabled,
   steps,
   concurrentAxis,
-  onReorder,
+  onReorderAction,
   children,
 }: {
   enabled: boolean
   steps: string[][]
   concurrentAxis: ConcurrentAxis
-  onReorder: (steps: string[][]) => void
+  onReorderAction: (steps: string[][]) => void
   children: ReactNode
 }) {
   if (!enabled) return <>{children}</>
@@ -370,7 +370,7 @@ export function MaybeTaskSortableGroup({
     <TaskSortableGroup
       steps={steps}
       concurrentAxis={concurrentAxis}
-      onReorder={onReorder}
+      onReorderAction={onReorderAction}
     >
       {children}
     </TaskSortableGroup>

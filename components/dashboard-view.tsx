@@ -374,7 +374,7 @@ function SimpleSection({
       {canEdit ? (
         <SortableGroup
           items={lists.map((l) => l.id)}
-          onReorder={(orderedIds) => onReorder(section, orderedIds)}
+          onReorderAction={(orderedIds) => onReorder(section, orderedIds)}
         >
           {cards}
         </SortableGroup>
@@ -479,7 +479,7 @@ function SimpleTaskListCard({
                 step.map((t) => t.id),
               )}
               concurrentAxis="vertical"
-              onReorder={handleTaskReorder}
+              onReorderAction={handleTaskReorder}
             >
               <div className="flex items-center gap-0 w-max">
                 {groupByStep(taskList.tasks).flatMap((step, stepIdx, steps) => {
@@ -719,7 +719,7 @@ function DetailedSection({
       {canEdit ? (
         <SortableGroup
           items={lists.map((l) => l.id)}
-          onReorder={(orderedIds) => onReorder(section, orderedIds)}
+          onReorderAction={(orderedIds) => onReorder(section, orderedIds)}
         >
           {cards}
         </SortableGroup>
@@ -806,7 +806,7 @@ function DetailedTaskListCard({
             step.map((t) => t.id),
           )}
           concurrentAxis="horizontal"
-          onReorder={handleTaskReorder}
+          onReorderAction={handleTaskReorder}
         >
           {groupByStep(taskList.tasks).map((step, stepIdx, steps) => (
             <div key={stepIdx}>
