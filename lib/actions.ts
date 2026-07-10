@@ -304,11 +304,11 @@ export async function reorderTaskListsAction(orderedIds: string[]) {
 
 export async function reorderTasksAction(
   taskListId: string,
-  orderedIds: string[],
+  steps: string[][],
 ) {
   await requireRole("editor")
   if (!taskListId) throw new Error("Task list id is required")
-  if (!Array.isArray(orderedIds) || orderedIds.length === 0) return
-  await setTaskOrder(taskListId, orderedIds)
+  if (!Array.isArray(steps) || steps.length === 0) return
+  await setTaskOrder(taskListId, steps)
   revalidatePath("/dashboard")
 }

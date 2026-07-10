@@ -53,6 +53,72 @@ function computeReorder(
   return without
 }
 
+// ---------------------------------------------------------------------------
+// Step-aware reordering for tasks. A "step" is a group of task ids shown as
+// concurrent (they share a sort_order). Dropping a task *beside* another
+// (along the concurrent axis) joins that step; dropping *across* creates a new
+// step before/after the target's step.
+// ---------------------------------------------------------------------------
+
+type ConcurrentAxis = "horizontal" | "vertical"
+
+function stepsEqual(a: string[][], b: string[][]): boolean {
+  if (a.length !== b.length) return false
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].length !== b[i].length) return false
+    for (let j = 0; j < a[i].length; j++) {
+      if (a[i][j] !== b[i][j]) return false
+    }
+  }
+  return true
+}
+
+function computeStepReorder(
+  steps: string[][],
+  startId: string,
+  targetId: string,
+  edge: Edge | null,
+  concurrentAxis: ConcurrentAxis,
+): string[][] {
+  if (startId === targetId || edge === null) return steps
+  // Remove the dragged id, then discard any step it emptied.
+  const next = steps
+    .map((step) => step.filter((id) => id !== startId))
+    .filter((step) => step.length > 0)
+
+  let targetStep = -1
+  let targetPos = -1
+  for (let i = 0; i < next.length; i++) {
+    const idx = next[i].indexOf(targetId)
+    if (idx !== -1) {
+      targetStep = i
+      targetPos = idx
+      break
+    }
+  }
+  if (targetStep === -1) return steps
+
+  // Edges parallel to the concurrent axis join the target's step; edges across
+  // it start a new step.
+  const joinStep =
+    concurrentAxis === "horizontal"
+      ? edge === "left" || edge === "right"
+      : edge === "top" || edge === "bottom"
+
+  if (joinStep) {
+    const after =
+      concurrentAxis === "horizontal" ? edge === "right" : edge === "bottom"
+    const merged = [...next[targetStep]]
+    merged.splice(after ? targetPos + 1 : targetPos, 0, startId)
+    next[targetStep] = merged
+  } else {
+    const after =
+      concurrentAxis === "horizontal" ? edge === "bottom" : edge === "right"
+    next.splice(after ? targetStep + 1 : targetStep, 0, [startId])
+  }
+  return next
+}
+
 export function SortableGroup({
   items,
   onReorder,
@@ -98,6 +164,61 @@ export function SortableGroup({
   )
 }
 
+// Step-aware group for tasks. Reports the new step structure (list of
+// concurrent groups) rather than a flat order.
+export function TaskSortableGroup({
+  steps,
+  concurrentAxis,
+  onReorder,
+  children,
+}: {
+  steps: string[][]
+  concurrentAxis: ConcurrentAxis
+  onReorder: (steps: string[][]) => void
+  children: ReactNode
+}) {
+  const instanceRef = useRef<symbol | null>(null)
+  if (instanceRef.current === null)
+    instanceRef.current = Symbol("task-sortable")
+  const instanceId = instanceRef.current
+
+  const stepsRef = useRef(steps)
+  stepsRef.current = steps
+  const onReorderRef = useRef(onReorder)
+  onReorderRef.current = onReorder
+  const axisRef = useRef(concurrentAxis)
+  axisRef.current = concurrentAxis
+
+  useEffect(() => {
+    return monitorForElements({
+      canMonitor: ({ source }) => source.data.instanceId === instanceId,
+      onDrop: ({ source, location }) => {
+        const target = location.current.dropTargets[0]
+        if (!target) return
+        const startId = source.data.id as string
+        const targetId = target.data.id as string
+        const edge = extractClosestEdge(target.data)
+        const current = stepsRef.current
+        const next = computeStepReorder(
+          current,
+          startId,
+          targetId,
+          edge,
+          axisRef.current,
+        )
+        if (stepsEqual(next, current)) return
+        onReorderRef.current(next)
+      },
+    })
+  }, [instanceId])
+
+  return (
+    <GroupContext.Provider value={{ instanceId }}>
+      {children}
+    </GroupContext.Provider>
+  )
+}
+
 function DropIndicator({ edge }: { edge: Edge }) {
   const position: Record<Edge, string> = {
     top: "top-0 left-0 right-0 h-0.5",
@@ -119,7 +240,7 @@ export function SortableItem({
   children,
 }: {
   id: string
-  orientation?: "vertical" | "horizontal"
+  orientation?: "vertical" | "horizontal" | "free"
   className?: string
   children: ReactNode
 }) {
@@ -135,7 +256,11 @@ export function SortableItem({
     if (!el || !handle || !ctx) return
     const { instanceId } = ctx
     const allowedEdges: Edge[] =
-      orientation === "vertical" ? ["top", "bottom"] : ["left", "right"]
+      orientation === "free"
+        ? ["top", "bottom", "left", "right"]
+        : orientation === "vertical"
+          ? ["top", "bottom"]
+          : ["left", "right"]
 
     return combine(
       draggable({
@@ -215,7 +340,7 @@ export function MaybeSortableItem({
 }: {
   enabled: boolean
   id: string
-  orientation?: "vertical" | "horizontal"
+  orientation?: "vertical" | "horizontal" | "free"
   className?: string
   children: ReactNode
 }) {
@@ -224,5 +349,30 @@ export function MaybeSortableItem({
     <SortableItem id={id} orientation={orientation} className={className}>
       {children}
     </SortableItem>
+  )
+}
+
+export function MaybeTaskSortableGroup({
+  enabled,
+  steps,
+  concurrentAxis,
+  onReorder,
+  children,
+}: {
+  enabled: boolean
+  steps: string[][]
+  concurrentAxis: ConcurrentAxis
+  onReorder: (steps: string[][]) => void
+  children: ReactNode
+}) {
+  if (!enabled) return <>{children}</>
+  return (
+    <TaskSortableGroup
+      steps={steps}
+      concurrentAxis={concurrentAxis}
+      onReorder={onReorder}
+    >
+      {children}
+    </TaskSortableGroup>
   )
 }

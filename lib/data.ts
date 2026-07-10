@@ -468,21 +468,24 @@ export async function setTaskListOrder(orderedIds: string[]): Promise<void> {
 }
 
 /**
- * Rewrites sort_order for tasks within a list to match `orderedIds`. Note this
- * linearises the flow "step" (each task gets a distinct sort_order); concurrent
- * grouping is set separately via the task's Step field.
+ * Rewrites sort_order for tasks within a list from an ordered list of "steps".
+ * Each step is a group of task ids shown as concurrent (they share a
+ * sort_order); steps flow in the given order. Tasks in the same step all
+ * receive the same sort_order so `groupByStep` renders them side by side.
  */
 export async function setTaskOrder(
   taskListId: string,
-  orderedIds: string[],
+  steps: string[][],
 ): Promise<void> {
   const results = await Promise.all(
-    orderedIds.map((id, index) =>
-      supabase
-        .from("tasks")
-        .update({ sort_order: (index + 1) * 10 })
-        .eq("id", id)
-        .eq("task_list_id", taskListId),
+    steps.flatMap((step, index) =>
+      step.map((id) =>
+        supabase
+          .from("tasks")
+          .update({ sort_order: (index + 1) * 10 })
+          .eq("id", id)
+          .eq("task_list_id", taskListId),
+      ),
     ),
   )
   for (const { error } of results) {

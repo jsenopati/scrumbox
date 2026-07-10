@@ -15,7 +15,7 @@ import { reorderTaskListsAction, reorderTasksAction } from "@/lib/actions"
 import { TaskDetailModal } from "./task-detail-modal"
 import { ListAdminControls } from "./list-admin-controls"
 import { DashboardAdminTools } from "./dashboard-admin-tools"
-import { SortableGroup, SortableItem, MaybeSortableGroup, MaybeSortableItem } from "./sortable"
+import { SortableGroup, SortableItem, MaybeSortableItem, MaybeTaskSortableGroup } from "./sortable"
 
 const statusBadge: Record<string, string> = {
   completed: "badge-success",
@@ -428,6 +428,12 @@ function SimpleTaskListCard({
   const completed = taskList.tasks.filter(
     (t) => t.status === "completed",
   ).length
+  const [, startTaskTransition] = useTransition()
+  const handleTaskReorder = (steps: string[][]) => {
+    startTaskTransition(async () => {
+      await reorderTasksAction(taskList.id, steps)
+    })
+  }
 
   return (
     <div className="card bg-base-100 shadow-md">
@@ -463,6 +469,14 @@ function SimpleTaskListCard({
         {/* Task flow */}
         {taskList.tasks.length > 0 && (
           <div className="overflow-x-auto pb-2 mt-1">
+            <MaybeTaskSortableGroup
+              enabled={canEdit}
+              steps={groupByStep(taskList.tasks).map((step) =>
+                step.map((t) => t.id),
+              )}
+              concurrentAxis="vertical"
+              onReorder={handleTaskReorder}
+            >
             <div className="flex items-center gap-0 w-max">
               {groupByStep(taskList.tasks).flatMap((step, stepIdx, steps) => {
                 const nodes = [
@@ -471,8 +485,13 @@ function SimpleTaskListCard({
                     className="flex flex-col gap-1.5"
                   >
                     {step.map((task) => (
-                      <button
+                      <MaybeSortableItem
                         key={task.id}
+                        enabled={canEdit}
+                        id={task.id}
+                        orientation="free"
+                      >
+                      <button
                         type="button"
                         onClick={() => onSelectTask(task.id)}
                         className={`flex flex-col gap-1 rounded-btn border px-3 py-2 w-48 text-left cursor-pointer transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
@@ -520,6 +539,7 @@ function SimpleTaskListCard({
                           )}
                         </div>
                       </button>
+                      </MaybeSortableItem>
                     ))}
                   </div>,
                 ]
@@ -529,6 +549,7 @@ function SimpleTaskListCard({
                 return nodes
               })}
             </div>
+            </MaybeTaskSortableGroup>
           </div>
         )}
       </div>
@@ -715,9 +736,9 @@ function DetailedTaskListCard({
   const storyPoints = calculateStoryPoints(taskList.tasks)
   const listHasStoryPoints = taskList.tasks.some((t) => t.storyPoints != null)
   const [, startTaskTransition] = useTransition()
-  const handleTaskReorder = (orderedIds: string[]) => {
+  const handleTaskReorder = (steps: string[][]) => {
     startTaskTransition(async () => {
-      await reorderTasksAction(taskList.id, orderedIds)
+      await reorderTasksAction(taskList.id, steps)
     })
   }
 
@@ -772,9 +793,12 @@ function DetailedTaskListCard({
         {taskList.tasks.length === 0 && (
           <p className="text-base-content/60 text-sm">No tasks in this list.</p>
         )}
-        <MaybeSortableGroup
+        <MaybeTaskSortableGroup
           enabled={canEdit && taskList.tasks.length > 0}
-          items={taskList.tasks.map((t) => t.id)}
+          steps={groupByStep(taskList.tasks).map((step) =>
+            step.map((t) => t.id),
+          )}
+          concurrentAxis="horizontal"
           onReorder={handleTaskReorder}
         >
         {groupByStep(taskList.tasks).map((step, stepIdx, steps) => (
@@ -786,6 +810,7 @@ function DetailedTaskListCard({
                   key={task.id}
                   enabled={canEdit}
                   id={task.id}
+                  orientation="free"
                   className={canEdit ? "flex-1 min-w-64" : undefined}
                 >
                 <div
@@ -858,7 +883,7 @@ function DetailedTaskListCard({
             )}
           </div>
         ))}
-        </MaybeSortableGroup>
+        </MaybeTaskSortableGroup>
       </div>
     </div>
   )
