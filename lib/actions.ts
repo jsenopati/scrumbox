@@ -15,6 +15,7 @@ import {
   addChecklistItem,
   setChecklistItemChecked,
   deleteChecklistItem,
+  setChecklistItemOrder,
   addTeamMember,
   deleteTeamMember,
   setTaskListOrder,
@@ -264,6 +265,17 @@ export async function deleteChecklistItemAction(itemId: string) {
   await requireRole("editor")
   if (!itemId) throw new Error("Checklist item id is required")
   await deleteChecklistItem(itemId)
+  revalidatePath("/dashboard")
+}
+
+export async function reorderChecklistItemsAction(
+  taskId: string,
+  orderedIds: string[],
+) {
+  await requireRole("editor")
+  if (!taskId) throw new Error("Task id is required")
+  if (!Array.isArray(orderedIds) || orderedIds.length === 0) return
+  await setChecklistItemOrder(taskId, orderedIds)
   revalidatePath("/dashboard")
 }
 

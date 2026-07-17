@@ -7,8 +7,10 @@ import {
   addChecklistItemAction,
   toggleChecklistItemAction,
   deleteChecklistItemAction,
+  reorderChecklistItemsAction,
   updateTaskNotesAction,
 } from "@/lib/actions"
+import { SortableGroup, SortableItem } from "@/components/sortable"
 
 export function TaskChecklistNotes({
   task,
@@ -59,30 +61,17 @@ export function ChecklistSection({
     })
   }
 
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <h4 className="font-semibold flex items-center gap-2">
-          <IoCheckmarkCircle className="text-success" />
-          Checklist
-        </h4>
-        {total > 0 && (
-          <span className="text-xs text-base-content/50">
-            {checked}/{total} done
-          </span>
-        )}
-      </div>
+  function reorder(orderedIds: string[]) {
+    startTransition(async () => {
+      await reorderChecklistItemsAction(task.id, orderedIds)
+    })
+  }
 
-      {total === 0 && (
-        <p className="text-sm text-base-content/50">No checklist items yet.</p>
-      )}
-
-      <ul className="space-y-1">
-        {task.checklist.map((item) => (
-          <li
-            key={item.id}
-            className="flex items-center gap-2 rounded-btn px-2 py-1 hover:bg-base-200"
-          >
+  const rows = (
+    <div className="space-y-1">
+      {task.checklist.map((item) => {
+        const row = (
+          <div className="flex items-center gap-2 rounded-btn px-2 py-1 hover:bg-base-200">
             <input
               type="checkbox"
               className="checkbox checkbox-sm checkbox-success"
@@ -108,9 +97,48 @@ export function ChecklistSection({
                 <IoTrashOutline />
               </button>
             )}
-          </li>
+          </div>
+        )
+        return canEdit ? (
+          <SortableItem key={item.id} id={item.id}>
+            {row}
+          </SortableItem>
+        ) : (
+          <div key={item.id}>{row}</div>
+        )
+      })}
+    </div>
+  )
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h4 className="font-semibold flex items-center gap-2">
+          <IoCheckmarkCircle className="text-success" />
+          Checklist
+        </h4>
+        {total > 0 && (
+          <span className="text-xs text-base-content/50">
+            {checked}/{total} done
+          </span>
+        )}
+      </div>
+
+      {total === 0 && (
+        <p className="text-sm text-base-content/50">No checklist items yet.</p>
+      )}
+
+      {total > 0 &&
+        (canEdit ? (
+          <SortableGroup
+            items={task.checklist.map((i) => i.id)}
+            onReorderAction={reorder}
+          >
+            {rows}
+          </SortableGroup>
+        ) : (
+          rows
         ))}
-      </ul>
 
       {canEdit && (
         <div className="flex gap-2 pt-1">

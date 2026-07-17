@@ -413,6 +413,28 @@ export async function deleteChecklistItem(itemId: string): Promise<void> {
   if (error) throw new Error(error.message)
 }
 
+/**
+ * Rewrites sort_order for a task's checklist items from an ordered list of
+ * ids. Items receive evenly spaced sort_order values in the given order.
+ */
+export async function setChecklistItemOrder(
+  taskId: string,
+  orderedIds: string[],
+): Promise<void> {
+  const results = await Promise.all(
+    orderedIds.map((id, index) =>
+      supabase
+        .from("task_checklist_items")
+        .update({ sort_order: (index + 1) * 10 })
+        .eq("id", id)
+        .eq("task_id", taskId),
+    ),
+  )
+  for (const { error } of results) {
+    if (error) throw new Error(error.message)
+  }
+}
+
 // --- team member writes -----------------------------------------------------
 
 export interface TeamMember {
