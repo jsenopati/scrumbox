@@ -18,9 +18,10 @@ import {
   setChecklistItemOrder,
   addTeamMember,
   deleteTeamMember,
-  setTaskListOrder,
+  setTaskListArrangement,
   setTaskOrder,
   type Task,
+  type TaskList,
 } from "@/lib/data"
 
 function str(formData: FormData, key: string): string {
@@ -307,10 +308,12 @@ export async function deleteTeamMemberAction(formData: FormData) {
 
 // --- drag and drop reorder (index-based) ------------------------------------
 
-export async function reorderTaskListsAction(orderedIds: string[]) {
+export async function reorderTaskListsAction(
+  arrangement: { id: string; section: TaskList["section"] }[],
+) {
   await requireRole("editor")
-  if (!Array.isArray(orderedIds) || orderedIds.length === 0) return
-  await setTaskListOrder(orderedIds)
+  if (!Array.isArray(arrangement) || arrangement.length === 0) return
+  await setTaskListArrangement(arrangement)
   revalidatePath("/dashboard")
 }
 

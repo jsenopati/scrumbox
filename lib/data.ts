@@ -471,17 +471,19 @@ export async function deleteTeamMember(id: string): Promise<void> {
 // --- bulk reorder (index-based, for drag and drop) -------------------------
 
 /**
- * Rewrites sort_order for the given task lists to match the order of
- * `orderedIds`. Pass the full set of ids whose relative order should be
- * applied (e.g. all active lists in their new display order).
+ * Rewrites both section and sort_order for task lists from a flat arrangement
+ * ordered across all sections. Each entry carries the section the list now
+ * belongs to; sort_order is assigned sequentially in the given order.
  */
-export async function setTaskListOrder(orderedIds: string[]): Promise<void> {
+export async function setTaskListArrangement(
+  arrangement: { id: string; section: TaskList["section"] }[],
+): Promise<void> {
   const results = await Promise.all(
-    orderedIds.map((id, index) =>
+    arrangement.map((item, index) =>
       supabase
         .from("task_lists")
-        .update({ sort_order: (index + 1) * 10 })
-        .eq("id", id),
+        .update({ sort_order: (index + 1) * 10, section: item.section })
+        .eq("id", item.id),
     ),
   )
   for (const { error } of results) {
