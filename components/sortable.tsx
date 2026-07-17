@@ -219,6 +219,147 @@ export function TaskSortableGroup({
   )
 }
 
+// ---------------------------------------------------------------------------
+// Cross-section reordering for task lists. Sections are ordered groups of
+// list ids; a list can be dragged within its section or across into another
+// section (including empty ones via a section drop zone). Reports the full
+// flattened arrangement of { id, section } in section order.
+// ---------------------------------------------------------------------------
+
+type SectionArrangement = { section: string; ids: string[] }
+type FlatArrangement = { id: string; section: string }
+
+function flattenSections(sections: SectionArrangement[]): FlatArrangement[] {
+  return sections.flatMap((s) => s.ids.map((id) => ({ id, section: s.section })))
+}
+
+function arrangementsEqual(a: FlatArrangement[], b: FlatArrangement[]): boolean {
+  if (a.length !== b.length) return false
+  return a.every((x, i) => x.id === b[i].id && x.section === b[i].section)
+}
+
+function computeSectionReorder(
+  sections: SectionArrangement[],
+  startId: string,
+  targetSection: string,
+  targetId: string | null,
+  edge: Edge | null,
+): SectionArrangement[] {
+  if (startId === targetId) return sections
+  const next = sections.map((s) => ({
+    section: s.section,
+    ids: s.ids.filter((id) => id !== startId),
+  }))
+  const target = next.find((s) => s.section === targetSection)
+  if (!target) return sections
+  if (targetId === null) {
+    target.ids.push(startId)
+  } else {
+    const idx = target.ids.indexOf(targetId)
+    if (idx === -1) {
+      target.ids.push(startId)
+    } else {
+      const after = edge === "bottom" || edge === "right"
+      target.ids.splice(after ? idx + 1 : idx, 0, startId)
+    }
+  }
+  return next
+}
+
+export function SectionSortableGroup({
+  sections,
+  onReorderAction,
+  children,
+}: {
+  sections: SectionArrangement[]
+  onReorderAction: (arrangement: FlatArrangement[]) => void
+  children: ReactNode
+}) {
+  const instanceRef = useRef<symbol | null>(null)
+  if (instanceRef.current === null)
+    instanceRef.current = Symbol("section-sortable")
+  const instanceId = instanceRef.current
+
+  const sectionsRef = useRef(sections)
+  sectionsRef.current = sections
+  const onReorderRef = useRef(onReorderAction)
+  onReorderRef.current = onReorderAction
+
+  useEffect(() => {
+    return monitorForElements({
+      canMonitor: ({ source }) => source.data.instanceId === instanceId,
+      onDrop: ({ source, location }) => {
+        const target = location.current.dropTargets[0]
+        if (!target) return
+        const targetSection = target.data.section as string | undefined
+        if (targetSection === undefined) return
+        const startId = source.data.id as string
+        const isZone = target.data.isSectionZone === true
+        const targetId = isZone ? null : (target.data.id as string)
+        const edge = isZone ? null : extractClosestEdge(target.data)
+        const current = sectionsRef.current
+        const next = computeSectionReorder(
+          current,
+          startId,
+          targetSection,
+          targetId,
+          edge,
+        )
+        const flat = flattenSections(next)
+        if (arrangementsEqual(flat, flattenSections(current))) return
+        onReorderRef.current(flat)
+      },
+    })
+  }, [instanceId])
+
+  return (
+    <GroupContext.Provider value={{ instanceId }}>
+      {children}
+    </GroupContext.Provider>
+  )
+}
+
+// A drop target that spans a whole section so lists can be dropped into it —
+// including empty sections that render no items.
+export function SectionDropZone({
+  section,
+  className,
+  children,
+}: {
+  section: string
+  className?: string
+  children: ReactNode
+}) {
+  const ctx = useContext(GroupContext)
+  const ref = useRef<HTMLDivElement>(null)
+  const [over, setOver] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el || !ctx) return
+    const { instanceId } = ctx
+    return dropTargetForElements({
+      element: el,
+      canDrop: ({ source }) => source.data.instanceId === instanceId,
+      getData: () => ({ instanceId, section, isSectionZone: true }),
+      onDragEnter: () => setOver(true),
+      onDragLeave: () => setOver(false),
+      onDrop: () => setOver(false),
+    })
+  }, [ctx, section])
+
+  return (
+    <div
+      ref={ref}
+      className={`rounded-box transition-colors ${
+        over ? "bg-primary/5 outline-2 outline-dashed outline-primary/40" : ""
+      } ${className ?? ""}`}
+    >
+      {children}
+    </div>
+  )
+}
+
 function DropIndicator({ edge }: { edge: Edge }) {
   const position: Record<Edge, string> = {
     top: "top-0 left-0 right-0 h-0.5",
@@ -235,11 +376,13 @@ function DropIndicator({ edge }: { edge: Edge }) {
 
 export function SortableItem({
   id,
+  section,
   orientation = "vertical",
   className,
   children,
 }: {
   id: string
+  section?: string
   orientation?: "vertical" | "horizontal" | "free"
   className?: string
   children: ReactNode
@@ -266,7 +409,7 @@ export function SortableItem({
       draggable({
         element: el,
         dragHandle: handle,
-        getInitialData: () => ({ instanceId, id }),
+        getInitialData: () => ({ instanceId, id, section }),
         // Suppress the browser's default full-element drag image (the
         // "onion-skin" ghost); we dim the source + show a drop indicator
         // instead.
@@ -281,7 +424,7 @@ export function SortableItem({
           source.data.instanceId === instanceId && source.data.id !== id,
         getData: ({ input, element }) =>
           attachClosestEdge(
-            { instanceId, id },
+            { instanceId, id, section },
             { input, element, allowedEdges },
           ),
         onDrag: ({ self }) => setEdge(extractClosestEdge(self.data)),
@@ -289,7 +432,7 @@ export function SortableItem({
         onDrop: () => setEdge(null),
       }),
     )
-  }, [ctx, id, orientation])
+  }, [ctx, id, section, orientation])
 
   return (
     <div

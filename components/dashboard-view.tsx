@@ -16,7 +16,8 @@ import { TaskDetailModal } from "./task-detail-modal"
 import { ListAdminControls } from "./list-admin-controls"
 import { DashboardAdminTools } from "./dashboard-admin-tools"
 import {
-  SortableGroup,
+  SectionSortableGroup,
+  SectionDropZone,
   SortableItem,
   MaybeSortableItem,
   MaybeTaskSortableGroup,
@@ -238,21 +239,27 @@ function SectionHeader({
   )
 }
 
-// Rebuild the full global task-list ordering after reordering one section.
-// Non-section lists keep their exact global slots; the section's slots are
-// filled with the new intra-section order.
-function reorderSectionInGlobal(
-  all: ProjectData["taskLists"],
-  section: ProjectData["taskLists"][number]["section"],
-  newSectionOrder: string[],
-): string[] {
-  const queue = [...newSectionOrder]
-  return all.map((tl) => (tl.section === section ? queue.shift()! : tl.id))
-}
-
 // ---------------------------------------------------------------------------
 // Simple view
 // ---------------------------------------------------------------------------
+
+type SectionId = ProjectData["taskLists"][number]["section"]
+
+const SECTION_DEFS: {
+  section: SectionId
+  title: string
+  subtitle?: string
+  faded?: boolean
+}[] = [
+  { section: "focus", title: "Currently working on" },
+  { section: "upnext", title: "Up next" },
+  {
+    section: "concurrent",
+    title: "Concurrent Tasks",
+    subtitle: "dynamic priority",
+  },
+  { section: "backlog", title: "Backlog", faded: true },
+]
 
 function SimpleView({
   data,
@@ -266,85 +273,79 @@ function SimpleView({
   onSelectTask: (taskId: string) => void
 }) {
   const [, startTransition] = useTransition()
-  const focus = data.taskLists.filter((tl) => tl.section === "focus")
-  const upnext = data.taskLists.filter((tl) => tl.section === "upnext")
-  const concurrent = data.taskLists.filter((tl) => tl.section === "concurrent")
-  const backlog = data.taskLists.filter((tl) => tl.section === "backlog")
 
-  const handleReorder = (
-    section: ProjectData["taskLists"][number]["section"],
-    orderedIds: string[],
+  const listsBySection = new Map<SectionId, ProjectData["taskLists"]>()
+  for (const def of SECTION_DEFS) {
+    listsBySection.set(
+      def.section,
+      data.taskLists.filter((tl) => tl.section === def.section),
+    )
+  }
+
+  const handleArrangement = (
+    arrangement: { id: string; section: string }[],
   ) => {
-    const global = reorderSectionInGlobal(data.taskLists, section, orderedIds)
     startTransition(async () => {
-      await reorderTaskListsAction(global)
+      await reorderTaskListsAction(
+        arrangement.map((a) => ({ id: a.id, section: a.section as SectionId })),
+      )
     })
   }
 
-  return (
+  const sections = (
     <div className="space-y-8">
-      <SimpleSection
-        title="Currently working on"
-        lists={focus}
-        canEdit={canEdit}
-        teamNames={teamNames}
-        onReorder={handleReorder}
-        onSelectTask={onSelectTask}
-      />
-      <SimpleSection
-        title="Up next"
-        lists={upnext}
-        canEdit={canEdit}
-        teamNames={teamNames}
-        onReorder={handleReorder}
-        onSelectTask={onSelectTask}
-      />
-      <SimpleSection
-        title="Concurrent Tasks"
-        subtitle="dynamic priority"
-        lists={concurrent}
-        canEdit={canEdit}
-        teamNames={teamNames}
-        onReorder={handleReorder}
-        onSelectTask={onSelectTask}
-      />
-      <SimpleSection
-        title="Backlog"
-        lists={backlog}
-        faded
-        canEdit={canEdit}
-        teamNames={teamNames}
-        onReorder={handleReorder}
-        onSelectTask={onSelectTask}
-      />
+      {SECTION_DEFS.map((def) => (
+        <SimpleSection
+          key={def.section}
+          section={def.section}
+          title={def.title}
+          subtitle={def.subtitle}
+          faded={def.faded}
+          lists={listsBySection.get(def.section) ?? []}
+          canEdit={canEdit}
+          teamNames={teamNames}
+          onSelectTask={onSelectTask}
+        />
+      ))}
     </div>
+  )
+
+  if (!canEdit) return sections
+
+  return (
+    <SectionSortableGroup
+      sections={SECTION_DEFS.map((def) => ({
+        section: def.section,
+        ids: (listsBySection.get(def.section) ?? []).map((l) => l.id),
+      }))}
+      onReorderAction={handleArrangement}
+    >
+      {sections}
+    </SectionSortableGroup>
   )
 }
 
 function SimpleSection({
+  section,
   title,
   subtitle,
   lists,
   faded,
   canEdit,
   teamNames,
-  onReorder,
   onSelectTask,
 }: {
+  section: SectionId
   title: string
   subtitle?: string
   lists: ProjectData["taskLists"]
   faded?: boolean
   canEdit: boolean
   teamNames: string[]
-  onReorder: (
-    section: ProjectData["taskLists"][number]["section"],
-    orderedIds: string[],
-  ) => void
   onSelectTask: (taskId: string) => void
 }) {
-  if (lists.length === 0) return null
-  const section = lists[0].section
+  // Read-only users don't see empty sections at all.
+  if (!canEdit && lists.length === 0) return null
 
   const cards = (
     <div className={`space-y-4 ${faded ? "opacity-80" : ""}`}>
@@ -358,7 +359,7 @@ function SimpleSection({
           />
         )
         return canEdit ? (
-          <SortableItem key={taskList.id} id={taskList.id}>
+          <SortableItem key={taskList.id} id={taskList.id} section={section}>
             {card}
           </SortableItem>
         ) : (
@@ -368,19 +369,27 @@ function SimpleSection({
     </div>
   )
 
+  if (!canEdit) {
+    return (
+      <div>
+        <SectionHeader title={title} subtitle={subtitle} />
+        {cards}
+      </div>
+    )
+  }
+
   return (
     <div>
       <SectionHeader title={title} subtitle={subtitle} />
-      {canEdit ? (
-        <SortableGroup
-          items={lists.map((l) => l.id)}
-          onReorderAction={(orderedIds) => onReorder(section, orderedIds)}
-        >
-          {cards}
-        </SortableGroup>
-      ) : (
-        cards
-      )}
+      <SectionDropZone section={section} className="min-h-16 p-1">
+        {lists.length > 0 ? (
+          cards
+        ) : (
+          <div className="flex items-center justify-center rounded-box border border-dashed border-base-300 py-6 text-sm text-base-content/40">
+            Drop a task list here
+          </div>
+        )}
+      </SectionDropZone>
     </div>
   )
 }
@@ -578,119 +587,120 @@ function DetailedView({
   teamNames: string[]
 }) {
   const [, startTransition] = useTransition()
-  const focus = data.taskLists.filter((tl) => tl.section === "focus")
-  const upnext = data.taskLists.filter((tl) => tl.section === "upnext")
-  const concurrent = data.taskLists.filter((tl) => tl.section === "concurrent")
-  const backlog = data.taskLists.filter((tl) => tl.section === "backlog")
 
-  const handleReorder = (
-    section: ProjectData["taskLists"][number]["section"],
-    orderedIds: string[],
+  const listsBySection = new Map<SectionId, ProjectData["taskLists"]>()
+  for (const def of SECTION_DEFS) {
+    listsBySection.set(
+      def.section,
+      data.taskLists.filter((tl) => tl.section === def.section),
+    )
+  }
+
+  const handleArrangement = (
+    arrangement: { id: string; section: string }[],
   ) => {
-    const global = reorderSectionInGlobal(data.taskLists, section, orderedIds)
     startTransition(async () => {
-      await reorderTaskListsAction(global)
+      await reorderTaskListsAction(
+        arrangement.map((a) => ({ id: a.id, section: a.section as SectionId })),
+      )
     })
+  }
+
+  const sections = SECTION_DEFS.map((def) => (
+    <DetailedSection
+      key={def.section}
+      section={def.section}
+      title={def.title}
+      subtitle={def.subtitle}
+      faded={def.faded}
+      lists={listsBySection.get(def.section) ?? []}
+      canEdit={canEdit}
+      teamNames={teamNames}
+    />
+  ))
+
+  const team = data.team.length > 0 && (
+    <div className="card bg-base-100 shadow mt-8">
+      <div className="card-body">
+        <h2 className="card-title">Team Members</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {data.team.map((member) => {
+            const memberTasks = data.taskLists.flatMap((tl) =>
+              tl.tasks.filter((t) => t.assignees.includes(member)),
+            )
+            const memberCompleted = memberTasks.filter(
+              (t) => t.status === "completed",
+            ).length
+            const memberInProgress = memberTasks.filter(
+              (t) => t.status === "in-progress",
+            ).length
+
+            return (
+              <div
+                key={member}
+                className="rounded-box border border-base-300 p-4"
+              >
+                <div className="font-semibold">{member}</div>
+                <div className="text-sm text-base-content/60 mt-2 space-y-1">
+                  <div>Total tasks: {memberTasks.length}</div>
+                  <div className="text-success">
+                    Completed: {memberCompleted}
+                  </div>
+                  <div className="text-warning">
+                    In progress: {memberInProgress}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+
+  if (!canEdit) {
+    return (
+      <div className="space-y-10">
+        {sections}
+        {team}
+      </div>
+    )
   }
 
   return (
     <div className="space-y-10">
-      <DetailedSection
-        title="Currently working on"
-        lists={focus}
-        canEdit={canEdit}
-        teamNames={teamNames}
-        onReorder={handleReorder}
-      />
-      <DetailedSection
-        title="Up next"
-        lists={upnext}
-        canEdit={canEdit}
-        teamNames={teamNames}
-        onReorder={handleReorder}
-      />
-      <DetailedSection
-        title="Concurrent Tasks"
-        subtitle="dynamic priority"
-        lists={concurrent}
-        canEdit={canEdit}
-        teamNames={teamNames}
-        onReorder={handleReorder}
-      />
-      <DetailedSection
-        title="Backlog"
-        lists={backlog}
-        faded
-        canEdit={canEdit}
-        teamNames={teamNames}
-        onReorder={handleReorder}
-      />
-
-      {/* Team Section */}
-      {data.team.length > 0 && (
-        <div className="card bg-base-100 shadow mt-8">
-          <div className="card-body">
-            <h2 className="card-title">Team Members</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {data.team.map((member) => {
-                const memberTasks = data.taskLists.flatMap((tl) =>
-                  tl.tasks.filter((t) => t.assignees.includes(member)),
-                )
-                const memberCompleted = memberTasks.filter(
-                  (t) => t.status === "completed",
-                ).length
-                const memberInProgress = memberTasks.filter(
-                  (t) => t.status === "in-progress",
-                ).length
-
-                return (
-                  <div
-                    key={member}
-                    className="rounded-box border border-base-300 p-4"
-                  >
-                    <div className="font-semibold">{member}</div>
-                    <div className="text-sm text-base-content/60 mt-2 space-y-1">
-                      <div>Total tasks: {memberTasks.length}</div>
-                      <div className="text-success">
-                        Completed: {memberCompleted}
-                      </div>
-                      <div className="text-warning">
-                        In progress: {memberInProgress}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      )}
+      <SectionSortableGroup
+        sections={SECTION_DEFS.map((def) => ({
+          section: def.section,
+          ids: (listsBySection.get(def.section) ?? []).map((l) => l.id),
+        }))}
+        onReorderAction={handleArrangement}
+      >
+        <div className="space-y-10">{sections}</div>
+      </SectionSortableGroup>
+      {team}
     </div>
   )
 }
 
 function DetailedSection({
+  section,
   title,
   subtitle,
   lists,
   faded,
   canEdit,
   teamNames,
-  onReorder,
 }: {
+  section: SectionId
   title: string
   subtitle?: string
   lists: ProjectData["taskLists"]
   faded?: boolean
   canEdit: boolean
   teamNames: string[]
-  onReorder: (
-    section: ProjectData["taskLists"][number]["section"],
-    orderedIds: string[],
-  ) => void
 }) {
-  if (lists.length === 0) return null
-  const section = lists[0].section
+  if (!canEdit && lists.length === 0) return null
 
   const cards = (
     <div className={`space-y-6 ${faded ? "opacity-80" : ""}`}>
@@ -703,7 +713,7 @@ function DetailedSection({
           />
         )
         return canEdit ? (
-          <SortableItem key={taskList.id} id={taskList.id}>
+          <SortableItem key={taskList.id} id={taskList.id} section={section}>
             {card}
           </SortableItem>
         ) : (
@@ -713,19 +723,27 @@ function DetailedSection({
     </div>
   )
 
+  if (!canEdit) {
+    return (
+      <div>
+        <SectionHeader title={title} subtitle={subtitle} />
+        {cards}
+      </div>
+    )
+  }
+
   return (
     <div>
       <SectionHeader title={title} subtitle={subtitle} />
-      {canEdit ? (
-        <SortableGroup
-          items={lists.map((l) => l.id)}
-          onReorderAction={(orderedIds) => onReorder(section, orderedIds)}
-        >
-          {cards}
-        </SortableGroup>
-      ) : (
-        cards
-      )}
+      <SectionDropZone section={section} className="min-h-16 p-1">
+        {lists.length > 0 ? (
+          cards
+        ) : (
+          <div className="flex items-center justify-center rounded-box border border-dashed border-base-300 py-6 text-sm text-base-content/40">
+            Drop a task list here
+          </div>
+        )}
+      </SectionDropZone>
     </div>
   )
 }

@@ -15,11 +15,13 @@ import {
   addChecklistItem,
   setChecklistItemChecked,
   deleteChecklistItem,
+  setChecklistItemOrder,
   addTeamMember,
   deleteTeamMember,
-  setTaskListOrder,
+  setTaskListArrangement,
   setTaskOrder,
   type Task,
+  type TaskList,
 } from "@/lib/data"
 
 function str(formData: FormData, key: string): string {
@@ -267,6 +269,17 @@ export async function deleteChecklistItemAction(itemId: string) {
   revalidatePath("/dashboard")
 }
 
+export async function reorderChecklistItemsAction(
+  taskId: string,
+  orderedIds: string[],
+) {
+  await requireRole("editor")
+  if (!taskId) throw new Error("Task id is required")
+  if (!Array.isArray(orderedIds) || orderedIds.length === 0) return
+  await setChecklistItemOrder(taskId, orderedIds)
+  revalidatePath("/dashboard")
+}
+
 // --- team member actions ----------------------------------------------------
 
 export async function addTeamMemberAction(formData: FormData) {
@@ -295,10 +308,12 @@ export async function deleteTeamMemberAction(formData: FormData) {
 
 // --- drag and drop reorder (index-based) ------------------------------------
 
-export async function reorderTaskListsAction(orderedIds: string[]) {
+export async function reorderTaskListsAction(
+  arrangement: { id: string; section: TaskList["section"] }[],
+) {
   await requireRole("editor")
-  if (!Array.isArray(orderedIds) || orderedIds.length === 0) return
-  await setTaskListOrder(orderedIds)
+  if (!Array.isArray(arrangement) || arrangement.length === 0) return
+  await setTaskListArrangement(arrangement)
   revalidatePath("/dashboard")
 }
 
